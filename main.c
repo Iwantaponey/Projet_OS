@@ -10,6 +10,8 @@
 #include <time.h>
 #include <sys/times.h>
 #include <pthread.h>
+#include "fonction.h"
+
 
 int main ()
 {

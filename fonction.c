@@ -10,4 +10,10 @@
 #include <time.h>
 #include <sys/times.h>
 #include <pthread.h>
+#include "fonction.h"
 
+traitement extraire (traitement t, char ** parametres)
+{	
+
+	return t;
+}
