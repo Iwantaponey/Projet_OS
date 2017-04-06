@@ -41,7 +41,7 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 traitement extraire (char * nom_fichier)
 {	
 	traitement t;
-	int e,i,j,l,fd; char s='a'; 
+	int e=1,i,j,l,fd; char s='a'; 
 	int nb_messages=0, nb_mots=0, nb_char, num_mess, num_mot, compteur=0;
 	
 	fd=open(nom_fichier, O_RDONLY);
@@ -55,8 +55,12 @@ traitement extraire (char * nom_fichier)
 			printf("Il y a %d messages a traiter dans %s \n", nb_messages, nom_fichier);
 		}
 	}
+	
+	close(fd);
 	int cle[nb_messages][2]; int cle_finale[nb_messages]; int chiffrements[nb_messages];
 	s='a';
+	
+	
 	char ** chemins=malloc(nb_messages*sizeof(char*));
 	for (i=0; i<nb_messages; i++)
 	{
@@ -64,30 +68,43 @@ traitement extraire (char * nom_fichier)
 		cle[i][2]=-1;
 	}
 	i=j=l=0;
+	
+	fd=open(nom_fichier, O_RDONLY);
 	while(e && s!='\0' && i<nb_messages && j<taille_max_chemin) // boucle pour la lecture du fichier principal
 	{	
 		e=read(fd,&s,1); // on lit les caracteres l un apres l autre
-		if (!e) printf("Erreur de lecture du fichier principal \n");
-		if (s!='\n') // on traite les messages les uns apres les autres
+		if (!e) {printf("Erreur de lecture du fichier principal \n");}
+		else
 		{
-			if (s!=';' && compteur==0) // on recupere les chemins de chaque message si compteur vaut 0 (si on n'a pas encore vu de ; )
-			{	
-				chemins[i][j]=s;
-				j++;
-			}
-			if (s==';') ++compteur; // quand on rencontre un ; on augmente le compteur 
-			if (s!=';' && compteur==1) // on recupere la cle de chaque message si compteur vaut 1 (si on a vu un seul ; )
+			printf("Boucle else \n");
+			if (s!='\n') // on traite les messages les uns apres les autres
 			{
-				cle[i][l]=atoi(&s); // etant donné que la clé peut être sur 2 caracteres, on a un tableau à 2 dimensions cle [i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard
-				l++;
+				printf("Traitement du message %d \n",i);
+				if (s!=';' && compteur==0) // on recupere les chemins de chaque message si compteur vaut 0 (si on n'a pas encore vu de ; )
+				{	
+					chemins[i][j]=s;
+					j++;
+					printf("Le caractere %c est dans le tableau chemins a la case [%d][%d]\n",s,i,j);
+				}
+				if (s==';') ++compteur; // quand on rencontre un ; on augmente le compteur 
+				if (s!=';' && compteur==1) // on recupere la cle de chaque message si compteur vaut 1 (si on a vu un seul ; )
+				{
+					cle[i][l]=s-48; // etant donné que la clé peut être sur 2 caracteres, on a un tableau à 2 dimensions cle [i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard
+					l++;
+					printf("Le caractere %c est dans le tableau cle a la case [%d][%d] \n", s, i, l);
+				}
+				if (s!=';' && compteur==2) // on recupere les modes de traitement pour chaque message si compteur vaut 2 (si on a vu deux ; )
+				{
+					if (s=='c') chiffrements[i]=1; 
+					else chiffrements[i]=0;
+					printf("Le caractere %c est dans le tableau chiffrements a la case [%d] \n",s,i);
+				}
 			}
-			if (s!=';' && compteur==2) // on recupere les modes de traitement pour chaque message si compteur vaut 2 (si on a vu deux ; )
+			else
 			{
-				if (s=='c') chiffrements[i]=1; 
-				else chiffrements[i]=0;
-			}
+			++i; compteur=0; j=0;
+			}	
 		}
-		++i; compteur=0;
 	}
 	close(fd);
 	
@@ -110,7 +127,7 @@ void affiche_traitement(traitement t)
 	int i,j,l;
 	for (i=0; i<t.nb_messages; ++i)
 	{
-		printf("Le message numero %d a pour chiffrement %d, pour cle %d et pour chemin %s \n",i, t.chiffrements[i], t.cles[i], t.chemins[i]);
+		printf("Le message numero %d a pour chiffrement %d, pour cle %d et pour chemin %s \n",i+1, t.chiffrements[i], t.cles[i], t.chemins[i]);
 		
 	}
 }
