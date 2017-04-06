@@ -12,8 +12,15 @@
 #include <pthread.h>
 #include "fonction.h"
 
+mot init_mot(pthread_t tid, int num, int nb_char)
+{
+	mot m = 
+	{tid, num, nb_char, malloc(nb_char*sizeof(char))};
+	return m;
+}
+
 traitement extraire (traitement t, char ** parametres)
 {	
-
+	
 	return t;
 }
