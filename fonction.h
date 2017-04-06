@@ -12,6 +12,7 @@
 #include <pthread.h>
 
 #define taille_max_chemin 1024
+#define taille_buffer 2048
 
 typedef struct
 {
