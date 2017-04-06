@@ -13,8 +13,11 @@
 #include "fonction.h"
 
 
-int main ()
+int main (int argc, char ** argv)
 {
 
+	traitement t;
+	t=extraire(argv[1]);
+	affiche_traitement(t);
 	return 0;
 }
