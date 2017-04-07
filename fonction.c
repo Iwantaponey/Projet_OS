@@ -44,13 +44,9 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 	return t;
 }
 
-traitement extraire (char * nom_fichier)
-{	
-	traitement t;
-	int e=1,i,j,l,fd; char s='a'; 
-	int nb_messages=0, nb_mots=0, nb_char, num_mess, num_mot, compteur=0;
-	
-	fd=open(nom_fichier, O_RDONLY);
+int compte_nb_messages(char * nom_fichier)
+{
+	int	fd=open(nom_fichier, O_RDONLY), nb_messages=0; char s='a';
 	
 	while(read(fd,&s,1) && s!='\0') // premier scan du fichier principal pour déterminer le nombre de messages à traiter
 	{
@@ -63,10 +59,15 @@ traitement extraire (char * nom_fichier)
 	}
 	
 	close(fd);
+	return nb_messages;	
+}
+
+traitement extraire (char * nom_fichier)
+{	
+	traitement t;
+	int e=1,i,j,l,fd; char s='a'; 
+	int nb_messages=compte_nb_messages(nom_fichier), compteur=0;
 	int cle[nb_messages][2]; int cle_finale[nb_messages]; int chiffrements[nb_messages];
-	s='a';
-	
-	
 	char ** chemins=malloc(nb_messages*sizeof(char*));
 	for (i=0; i<nb_messages; i++)
 	{
@@ -74,7 +75,6 @@ traitement extraire (char * nom_fichier)
 		cle[i][1]=-1;
 	}
 	i=j=l=0;
-	
 	fd=open(nom_fichier, O_RDONLY);
 	while(e && s!='\0' && i<nb_messages && j<taille_max_chemin) // boucle pour la lecture du fichier principal
 	{	
@@ -132,14 +132,82 @@ traitement extraire (char * nom_fichier)
 	for (i=0; i<nb_messages; i++)
 	{
 		printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
-		
 	}
 	
 	t=init_traitement(chiffrements, cle_finale, nb_messages, chemins); 
 	return t;
 }
 
-
+int * compte_nb_mots(traitement t)
+{	
+	int i, fd, nb_mots[t.nb_messages];
+	char s='a';
+	fd=open(t.chemins[i], O_RDONLY);
+	for (i=0; i<t.nb_messages && (read(fd,&s,1)); ++i)
+	{	
+		if (s==' '|| s=='\n') ++nb_mots[i]; 
+	}
+	close(fd);
+	return nb_mots;
+	
+}
+/*
+traitement assigne_message (traitement t)
+{
+	int e,fd,i,j,k,nb_mots[t.nb_messages]=compte_nb_mots(t), num_mess[t.nb_messages];
+	char s='a';
+	int num_mots[nb_mots], nb_char[nb_mots];
+	
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		num_mess[i]=i;
+		for (j=0; j<nb_mots[i]; ++j)
+		{
+			num_mots[j]=j;
+			nb_char[j]=0;
+		}
+	}
+	
+	
+	fd=open(t.chemins[i], O_RDONLY);
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		for(j=0; j<nb_mots[i]; ++j)
+		{
+			read(fd,&s,1);
+			if (s!=' ' && s!='\n')
+				++nb_char[j];
+		}
+	}
+	close(fd);
+	
+	char *** tab_mess;
+	tab_mess=malloc(t.nb_messages*sizeof(char**));
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		tab_mess[i]=malloc(nb_mots[i]*sizeof(char*));
+		for(j=0; j<nb_mots[i]; ++j)
+		{
+				tab_mess[i][j]=malloc(nb_char[j]*sizeof(char));
+		}
+	}
+	
+	
+	fd=open(t.chemins[i], O_RDONLY);
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		
+		while(s!='\0')
+		{
+			
+			
+			
+		}
+		close(fd);
+	}
+	return t;
+}
+*/
 void affiche_traitement(traitement t)
 {
 	printf("Il y a %d messages dans la structure traitement \n", t.nb_messages);

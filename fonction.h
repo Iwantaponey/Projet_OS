@@ -63,3 +63,5 @@ mot init_mot(pthread_t tid, int num, int nb_char);
 message init_mess(pid_t pid, int num_mess, int nb_mots, int chiffrement, int cle, char * chemin);
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins);
 traitement extraire (char * nom_fichier);
+void affiche_traitement(traitement t);
+traitement assigne_message (traitement t);
