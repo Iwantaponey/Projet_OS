@@ -62,12 +62,31 @@ int compte_nb_messages(char * nom_fichier)
 	return nb_messages;	
 }
 
+int * recupere_cle(int nb_messages, int cle[nb_messages][2])
+{
+	int i,* cle_finale=malloc(nb_messages*sizeof(int));
+	for (i=0; i<nb_messages; ++i)
+	{
+		if (cle[i][1]!=-1)
+		{
+			cle_finale[i]=((10*cle[i][0])+cle[i][1]);
+			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
+		}
+		else
+		{	
+			cle_finale[i]=(cle[i][0]);
+			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
+		}
+	}
+	return cle_finale;
+}
+
 traitement extraire (char * nom_fichier)
 {	
 	traitement t;
 	int e=1,i,j,l,fd; char s='a'; 
 	int nb_messages=compte_nb_messages(nom_fichier), compteur=0;
-	int cle[nb_messages][2]; int cle_finale[nb_messages]; int chiffrements[nb_messages];
+	int cle[nb_messages][2];  int chiffrements[nb_messages];
 	char ** chemins=malloc(nb_messages*sizeof(char*));
 	for (i=0; i<nb_messages; i++)
 	{
@@ -113,21 +132,9 @@ traitement extraire (char * nom_fichier)
 		}
 	}
 	close(fd);
-	
-	for (i=0; i<nb_messages; ++i)
-	{
-		printf("boucle for");
-		if (cle[i][1]!=-1)
-		{
-			cle_finale[i]=((10*cle[i][0])+cle[i][1]);
-			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
-		}
-		else
-		{	
-			cle_finale[i]=(cle[i][0]);
-			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
-		}
-	}
+
+	int * cle_finale = malloc(nb_messages* sizeof(int));
+	cle_finale=recupere_cle(nb_messages, cle);
 	
 	for (i=0; i<nb_messages; i++)
 	{
@@ -138,48 +145,62 @@ traitement extraire (char * nom_fichier)
 	return t;
 }
 
-int * compte_nb_mots(traitement t)
+int * compte_nb_mots(int * nb_mots, traitement t)
 {	
-	int i, fd, nb_mots[t.nb_messages];
+	int i, fd;
 	char s='a';
 	fd=open(t.chemins[i], O_RDONLY);
 	for (i=0; i<t.nb_messages && (read(fd,&s,1)); ++i)
 	{	
-		if (s==' '|| s=='\n') ++nb_mots[i]; 
+		if (s==' '|| s=='\n') nb_mots[i]=nb_mots[i]+1; 
 	}
 	close(fd);
 	return nb_mots;
-	
 }
-/*
+
+int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
+{
+	int i,j,fd; char s='a';
+		
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		fd=open(t.chemins[i], O_RDONLY);
+		for(j=0; j<nb_mots[i]; ++j)
+		{
+			read(fd,&s,1);
+			if (s!=' ' && s!='\n')
+			nb_char[i][j]=nb_char[i][j]+1;
+		}
+		close(fd);
+	}
+	return nb_char;
+}
+
 traitement assigne_message (traitement t)
 {
-	int e,fd,i,j,k,nb_mots[t.nb_messages]=compte_nb_mots(t), num_mess[t.nb_messages];
+	int e,fd,i,j,k,* nb_mots = malloc(t.nb_messages*sizeof(int)), num_mess[t.nb_messages];
 	char s='a';
-	int num_mots[nb_mots], nb_char[nb_mots];
+	
+	nb_mots=compte_nb_mots(nb_mots,t);
+	
+	int ** num_mots=malloc(t.nb_messages*sizeof(int*)),** nb_char=malloc(t.nb_messages*sizeof(int*));
+	
+	for (i=0; i<t.nb_messages; ++i)
+	{	
+		num_mots[i]=malloc(nb_mots[i]*sizeof(int));
+	}
 	
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		num_mess[i]=i;
 		for (j=0; j<nb_mots[i]; ++j)
 		{
-			num_mots[j]=j;
-			nb_char[j]=0;
+			num_mots[i][j]=j;
+			nb_char[i][j]=0;
 		}
 	}
 	
-	
-	fd=open(t.chemins[i], O_RDONLY);
-	for (i=0; i<t.nb_messages; ++i)
-	{
-		for(j=0; j<nb_mots[i]; ++j)
-		{
-			read(fd,&s,1);
-			if (s!=' ' && s!='\n')
-				++nb_char[j];
-		}
-	}
-	close(fd);
+	nb_char=compte_nb_char(nb_mots, nb_char, t);
 	
 	char *** tab_mess;
 	tab_mess=malloc(t.nb_messages*sizeof(char**));
@@ -188,7 +209,7 @@ traitement assigne_message (traitement t)
 		tab_mess[i]=malloc(nb_mots[i]*sizeof(char*));
 		for(j=0; j<nb_mots[i]; ++j)
 		{
-				tab_mess[i][j]=malloc(nb_char[j]*sizeof(char));
+				tab_mess[i][j]=malloc(nb_char[i][j]*sizeof(char));
 		}
 	}
 	
@@ -207,7 +228,9 @@ traitement assigne_message (traitement t)
 	}
 	return t;
 }
-*/
+
+
+
 void affiche_traitement(traitement t)
 {
 	printf("Il y a %d messages dans la structure traitement \n", t.nb_messages);
