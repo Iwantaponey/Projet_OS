@@ -12,35 +12,26 @@
 #include <pthread.h>
 #include "fonction.h"
 
-mot init_mot(pthread_t tid, int num_mot, int nb_char)
+mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char)
 {
+	pthread_t tid;
 	mot w = 
-	{tid, num_mot, nb_char, malloc(nb_char*sizeof(char))};
+	{tid, num_mot, nb_char, chiffrement, cle, tab_char};
 	return w;
 }
 
-message init_mess(pid_t pid, int num_mess, int nb_mots, int chiffrement, int cle, char * chemin)
+message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin)
 {
+	pid_t pid;
 	message m=
-	{pid, num_mess, nb_mots, malloc(nb_mots*sizeof(mot)), chiffrement, cle, malloc(taille_max_chemin*sizeof(char))};
-	m.chemin=chemin;
+	{pid, num_mess, nb_mots, tab_mots , chiffrement, cle, chemin};
 	return m;
 }
 
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins)
 {
-	
 	traitement t=
-	{malloc(nb_messages*sizeof(int)),malloc(nb_messages*sizeof(int)), nb_messages, chemins, malloc(nb_messages*sizeof(message))};
-	int i;
-	for (i=0; i<nb_messages; i++)
-	{
-		t.chiffrements[i]=chiffrements[i];
-		printf(" pour le chiffrement du message %d dans t, on a %d", i, t.chiffrements[i]);
-		t.cles[i]=cles[i];
-		printf(" pour la cle du message %d dans t, on a %d", i, t.cles[i]);
-	}
-	
+	{chiffrements,cles, nb_messages, chemins, malloc(nb_messages*sizeof(message))};
 	return t;
 }
 
@@ -50,32 +41,32 @@ int compte_nb_messages(char * nom_fichier)
 	
 	while(read(fd,&s,1) && s!='\0') // premier scan du fichier principal pour déterminer le nombre de messages à traiter
 	{
-		printf("Le caractère lu est %c \n",s);
+		//printf("Le caractère lu est %c \n",s);
 		if (s=='\n') 
 		{
 			++nb_messages;
 			printf("Il y a %d messages a traiter dans %s \n", nb_messages, nom_fichier);
 		}
-	}
+	}	
 	
 	close(fd);
 	return nb_messages;	
 }
 
-int * recupere_cle(int nb_messages, int cle[nb_messages][2])
+int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
 {
-	int i,* cle_finale=malloc(nb_messages*sizeof(int));
+	int i;
 	for (i=0; i<nb_messages; ++i)
 	{
 		if (cle[i][1]!=-1)
 		{
 			cle_finale[i]=((10*cle[i][0])+cle[i][1]);
-			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
+			//printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
 		}
 		else
 		{	
 			cle_finale[i]=(cle[i][0]);
-			printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
+			//printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
 		}
 	}
 	return cle_finale;
@@ -86,7 +77,7 @@ traitement extraire (char * nom_fichier)
 	traitement t;
 	int e=1,i,j,l,fd; char s='a'; 
 	int nb_messages=compte_nb_messages(nom_fichier), compteur=0;
-	int cle[nb_messages][2];  int chiffrements[nb_messages];
+	int cle[nb_messages][2];  int * chiffrements=malloc(nb_messages*sizeof(int));
 	char ** chemins=malloc(nb_messages*sizeof(char*));
 	for (i=0; i<nb_messages; i++)
 	{
@@ -107,7 +98,7 @@ traitement extraire (char * nom_fichier)
 				if (s!=';' && compteur==0) // on recupere les chemins de chaque message si compteur vaut 0 (si on n'a pas encore vu de ; )
 				{	
 					chemins[i][j]=s;
-					printf("Le caractere %c est dans le tableau chemins a la case [%d][%d]\n",s,i,j);
+			//		printf("Le caractere %c est dans le tableau chemins a la case [%d][%d]\n",s,i,j);
 					j++;
 					
 				}
@@ -115,14 +106,14 @@ traitement extraire (char * nom_fichier)
 				if (s!=';' && compteur==1) // on recupere la cle de chaque message si compteur vaut 1 (si on a vu un seul ; )
 				{
 					cle[i][l]=s-48; // etant donné que la clé peut être sur 2 caracteres, on a un tableau à 2 dimensions cle [i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard
-					printf("Le caractere %c est dans le tableau cle a la case [%d][%d] \n", s, i, l);
+		//			printf("Le caractere %c est dans le tableau cle a la case [%d][%d] \n", s, i, l);
 					l++;
 									}
 				if (s!=';' && compteur==2) // on recupere les modes de traitement pour chaque message si compteur vaut 2 (si on a vu deux ; )
 				{
 					if (s=='c') chiffrements[i]=1; 
 					else chiffrements[i]=0;
-					printf("Le caractere %d est dans le tableau chiffrements a la case [%d] \n",chiffrements[i]	,i);
+					//printf("Le caractere %d est dans le tableau chiffrements a la case [%d] \n",chiffrements[i]	,i);
 				}
 			}
 			else
@@ -134,29 +125,17 @@ traitement extraire (char * nom_fichier)
 	close(fd);
 
 	int * cle_finale = malloc(nb_messages* sizeof(int));
-	cle_finale=recupere_cle(nb_messages, cle);
+	cle_finale=recupere_cle(cle_finale,nb_messages, cle);
 	
 	for (i=0; i<nb_messages; i++)
 	{
-		printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
+	 	printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
 	}
-	
+
 	t=init_traitement(chiffrements, cle_finale, nb_messages, chemins); 
 	return t;
 }
 
-int * compte_nb_mots(int * nb_mots, traitement t)
-{	
-	int i, fd;
-	char s='a';
-	fd=open(t.chemins[i], O_RDONLY);
-	for (i=0; i<t.nb_messages && (read(fd,&s,1)); ++i)
-	{	
-		if (s==' '|| s=='\n') nb_mots[i]=nb_mots[i]+1; 
-	}
-	close(fd);
-	return nb_mots;
-}
 
 int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 {
@@ -167,8 +146,7 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 		fd=open(t.chemins[i], O_RDONLY);
 		for(j=0; j<nb_mots[i]; ++j)
 		{
-			read(fd,&s,1);
-			if (s!=' ' && s!='\n')
+			while(read(fd,&s,1)&& s!=' ' && s!='\n')
 			nb_char[i][j]=nb_char[i][j]+1;
 		}
 		close(fd);
@@ -176,31 +154,74 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 	return nb_char;
 }
 
+int * compte_nb_mots(int * nb_mots, traitement t)
+{	
+	int i, fd, compteur;
+	char s='a';
+	for (i=0; i<t.nb_messages; ++i)
+	{	
+		fd=open(t.chemins[i], O_RDONLY);
+		while(read(fd,&s,1) && s!='\0')
+		{	
+			if ((s==' '|| s=='\n' || s=='\0' || s=='\t'))
+			{	if (compteur==0)
+				{
+					nb_mots[i]=nb_mots[i]+1; 
+				}
+				else
+					compteur++;
+			}
+			else compteur=0;
+		}
+		close(fd);
+	}
+	
+	return nb_mots;
+}
+
+
 traitement assigne_message (traitement t)
 {
-	int e,fd,i,j,k,* nb_mots = malloc(t.nb_messages*sizeof(int)), num_mess[t.nb_messages];
+	int fd,i,j,k,* nb_mots = malloc(t.nb_messages*sizeof(int));
 	char s='a';
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		nb_mots[i]=0;
+	}
 	
 	nb_mots=compte_nb_mots(nb_mots,t);
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		//printf("Il y a %d mots dans le message %d \n",nb_mots[i], i);
+		
+	}
 	
-	int ** num_mots=malloc(t.nb_messages*sizeof(int*)),** nb_char=malloc(t.nb_messages*sizeof(int*));
+	int ** nb_char=malloc(t.nb_messages*sizeof(int*));
 	
 	for (i=0; i<t.nb_messages; ++i)
 	{	
-		num_mots[i]=malloc(nb_mots[i]*sizeof(int));
+		nb_char[i]=malloc(nb_mots[i]*sizeof(int));
 	}
 	
 	for (i=0; i<t.nb_messages; ++i)
 	{
-		num_mess[i]=i;
 		for (j=0; j<nb_mots[i]; ++j)
 		{
-			num_mots[i][j]=j;
 			nb_char[i][j]=0;
 		}
 	}
 	
 	nb_char=compte_nb_char(nb_mots, nb_char, t);
+	
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		for(j=0; j<nb_mots[i]; ++j)
+			{
+	
+			}
+			//printf("Il y a %d char dans le mot %d du message %d \n",nb_char[i][j],j,i);
+	}
+	
 	
 	char *** tab_mess;
 	tab_mess=malloc(t.nb_messages*sizeof(char**));
@@ -214,18 +235,48 @@ traitement assigne_message (traitement t)
 	}
 	
 	
-	fd=open(t.chemins[i], O_RDONLY);
+	
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		fd=open(t.chemins[i], O_RDONLY);
+		for (j=0; j<nb_mots[i]; ++j)
+		{
+			for (k=0; k<nb_char[i][j]; ++k)
+				{
+					read(fd,&(tab_mess[i][j][k]),1);
+					while (tab_mess[i][j][k]!='\0' && (tab_mess[i][j][k]==' ' || tab_mess[i][j][k]=='\n'))
+						read(fd,&(tab_mess[i][j][k]),1);
+				}
+		}
+		
+		close(fd);
+	}
+	
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		for (j=0; j<nb_mots[i]; ++j)
+		{
+//			printf("Dans la case [%d][%d] on a le mot %s \n",i,j,tab_mess[i][j]);
+		}
+	}
+	
+	message * mess = malloc(t.nb_messages * sizeof(message));
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		
-		while(s!='\0')
+		mot * mots = malloc(nb_mots[i]*sizeof(mot));
+		
+		for (j=0; j<nb_mots[i]; ++j)
 		{
-			
-			
-			
+			mots[j]=init_mot(j, nb_char[i][j], t.chiffrements[i], t.cles[i], tab_mess[i][j]);
+			//printf("Pour le message [%d], le mot %d est %s",i,j, mots[j].tab_char);
 		}
-		close(fd);
+		
+		mess[i]=init_mess(i, nb_mots[i], mots, t.chiffrements[i], t.cles[i], t.chemins[i]);
 	}
+	
+	
+	t.tab_mess=mess;
 	return t;
 }
 
@@ -238,6 +289,9 @@ void affiche_traitement(traitement t)
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		printf("Le message numero %d a pour chiffrement %d, pour cle %d et pour chemin %s \n",i, t.chiffrements[i], t.cles[i], t.chemins[i]);
-		
+		for (j=0; j<t.tab_mess[i].nb_mots; ++j)
+			{
+				printf("Mot numero %d du message %d est %s \n Il a %d char, une cle de %d et un chiffrement de %d \n\n\n\n", t.tab_mess[i].tab_mots[j].num_mot, t.tab_mess[i].num_mess, t.tab_mess[i].tab_mots[j].tab_char, t.tab_mess[i].tab_mots[j].nb_char, t.tab_mess[i].tab_mots[j].cle, t.tab_mess[i].tab_mots[j].chiffrement);
+			}
 	}
 }

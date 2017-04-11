@@ -16,9 +16,11 @@
 
 typedef struct
 {
+	pthread_t tid; // le thread assigné au traitement de ce message
     int num_mot; // le numéro du mot dans le message 
-    pthread_t tid; // le thread assigné au traitement de ce message
     int nb_char; // taille du mot en caractères
+    int chiffrement;
+    int cle;
     char * tab_char; // tableau de caractères ayant pour taille la taille du mot
 }mot;
 
@@ -59,8 +61,8 @@ typedef struct
 
 
 
-mot init_mot(pthread_t tid, int num, int nb_char);
-message init_mess(pid_t pid, int num_mess, int nb_mots, int chiffrement, int cle, char * chemin);
+mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char);
+message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins);
 traitement extraire (char * nom_fichier);
 void affiche_traitement(traitement t);
