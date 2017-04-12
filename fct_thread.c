@@ -10,7 +10,7 @@ void encrypting(void* arg1, void* arg2) // Crypter
 	for (i = 0; i < m->nb_char; i++)
 	{
 		s = ((m->tab_char[i]-65) + m->cle)%26;
-		buf->tab_buff = s + 65;
+		buf->tab_buff[i] = s + 65;
 	}	
 }
 
@@ -20,7 +20,7 @@ void decrypting(mot m, buffer buf) // Décrypter
 	for (i = 0; i < m.nb_char; i++)
 	{
 		s = ((m.tab_char[i]-65) - m.cle)%26;
-		buf.tab_buff = s + 65;
+		buf.tab_buff[i] = s + 65;
 	}
 }
 
