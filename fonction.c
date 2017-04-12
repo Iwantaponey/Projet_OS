@@ -35,6 +35,12 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 	return t;
 }
 
+buffer init_buffer(int taille_buff)
+{
+	buffer b={taille_buff, malloc(taille_buff*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
+	return b;
+}
+
 int compte_nb_messages(char * nom_fichier)
 {
 	int	fd=open(nom_fichier, O_RDONLY), nb_messages=0; char s='a';
