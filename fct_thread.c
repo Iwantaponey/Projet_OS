@@ -2,6 +2,8 @@
 
 //Créer un buffer mais où ? Dans le processus chef d'équipe ?
 
+pthread_t tid;
+mot m= {tid, 0, 6, 1, 8, "patate"}; 
 
 void encrypting(mot m, buffer buf) // Crypter
 {	
@@ -40,8 +42,6 @@ void traiter(mot m) //Décide le mode de traitement en regardant la variable chi
 		pthread_join(*tid, NULL);
 	}
 } // Ne compile pas ...
-
-
 
 // Fonction qui affiche le contenu du buffer : vérifier que tout se passe bien
 void affichagebuffer(buffer buf)
