@@ -2,9 +2,6 @@
 
 //Créer un buffer mais où ? Dans le processus chef d'équipe ?
 
-pthread_t tid;
-mot m= {tid, 0, 6, 1, 8, "patate"}; 
-
 void encrypting(mot m, buffer buf) // Crypter
 {	
 	int i; char s;
@@ -55,6 +52,7 @@ void affichagebuffer(buffer buf)
 
 int main()
 {
-	
+	char * str = "patate";
+	mot m=init_mot(0, 6, 1, 8, str); 
 	return 0;
 }
