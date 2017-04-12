@@ -2,13 +2,15 @@
 
 //Créer un buffer mais où ? Dans le processus chef d'équipe ?
 
-void encrypting(mot m, buffer buf) // Crypter
+void encrypting(void* arg1, void* arg2) // Crypter
 {	
 	int i; char s;
-	for (i = 0; i < m.nb_char; i++)
+	mot* m = (mot*) arg1;
+	buffer* buf = (buffer*) arg2;
+	for (i = 0; i < m->nb_char; i++)
 	{
-		s = ((m.tab_char[i]-65) + m.cle)%26;
-		buf.tab_buff = s + 65;
+		s = ((m->tab_char[i]-65) + m->cle)%26;
+		buf->tab_buff = s + 65;
 	}	
 }
 
