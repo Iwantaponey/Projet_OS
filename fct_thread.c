@@ -1,6 +1,7 @@
 #include "fonction.h"
 //Créer un buffer mais où ? Chef d'équipe ?
-
+pthread_t tid;
+mot m= {tid, 0, 6, 1, 8, "patate"}; 
 
 void encrypting(mot m, buffer buf) //crypter
 {	
