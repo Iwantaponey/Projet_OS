@@ -9,7 +9,7 @@ char cryptage(char c, int cle)
 	{
 		printf("majuscule \n");
 		c = c + cle; // Modification du caractère
-		if (c > 9) c=c-26;
+		if (c > 90) c=c-26;
 	}
 	else if (c > 96) // si je suis une minuscule comprise entre 97 et 122 
 	{
