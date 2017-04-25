@@ -3,13 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 #include <dirent.h>
 #include <time.h>
 #include <sys/times.h>
 #include <pthread.h>
+
 
 #define taille_max_chemin 1024
 #define taille_buffer 2048
@@ -59,11 +57,3 @@ typedef struct
     int chiffrement;    
 }retour_message;
 
-
-
-mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char);
-message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
-traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins);
-traitement extraire (char * nom_fichier);
-void affiche_traitement(traitement t);
-traitement assigne_message (traitement t);
