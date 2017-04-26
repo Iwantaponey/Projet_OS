@@ -330,16 +330,20 @@ char cryptage(char c, int cle)
 void thread_buffer(void * z)
 {
 	mot * m = (mot *) z;
+	m->tid=gettid();
+	if (m.chiffrement)
 	
 }
 
 void assigne_thread(traitement t, int num_mess)
 {
-	int j;
+	int j; void arg[j][2]; buffer buf = {taille_buffer, taille_buffer*malloc(*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
 	pthread_t * tid = malloc(t.tab_mess[num_mess].nb_mots*sizeof(tid));
 	for (j=0; j<t.tab_mess[num_mess].nb_mots; ++j)
 	{
-		pthread_create(tid+j,NULL,&thread_buffer, &(t.tab_mess[num_mess].tab_mots[j]));
+		arg[j][0]=t.tab_mess[num_mess].tab_mots[j]);
+		arg[j][1]= buf;
+		pthread_create(tid+j,NULL,&thread_buffer, arg[j]);
 		pthread_join(tid[j], NULL);
 		
 	}	

@@ -1,8 +1,4 @@
-#include "extraction.h"
-#include "traitement.h"
-#include "renvoi.h"
-
-
+#include "fonction.h"
 
 int main (int argc, char ** argv)
 {
