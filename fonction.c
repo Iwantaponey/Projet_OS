@@ -348,7 +348,7 @@ void * thread_buffer(void * z)
 		char * retour = cryptage_mot(a->t.tab_mess[a->num_mess].tab_mots[a->num_mot]);
 		printf("retour = %s \n",retour);
 		pthread_mutex_lock(a->b.mutex);
-		for (i=a->b.fin; i<(a->b.fin+a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].nb_char) ; ++i)
+		for (i=a->b.fin; i<a->b.fin+a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].nb_char ; ++i)
 		{		
 			a->b.tab_buff[i]=retour[j];
 			printf("le caractere %c est entre sur le buffer" , a->b.tab_buff[i]);
