@@ -14,9 +14,8 @@
 
 mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char)
 {
-	pthread_t tid;
 	mot w = 
-	{tid, num_mot, nb_char, chiffrement, cle, tab_char};
+	{num_mot, nb_char, chiffrement, cle, tab_char};
 	return w;
 }
 
@@ -244,9 +243,6 @@ traitement assigne_message (traitement t)
 				tab_mess[i][j]=malloc(nb_char[i][j]*sizeof(char));
 		}
 	}
-	
-	
-	
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		fd=open(t.chemins[i], O_RDONLY);
@@ -307,7 +303,7 @@ void affiche_traitement(traitement t)
 	}
 }
 
-char cryptage(char c, int cle)
+char cryptage_char(char c, int cle)
 {
 	if (c < 65) return c; // avant A
 	if (c > 122) return c; // après z
@@ -327,24 +323,111 @@ char cryptage(char c, int cle)
 	return c;
 }
 
-void thread_buffer(void * z)
+char * cryptage_mot (const mot m)
 {
-	mot * m = (mot *) z;
-	m->tid=gettid();
-	if (m.chiffrement)
+	int k; char * retour=malloc(m.nb_char*sizeof(char));
+	for (k=0; k<m.nb_char; ++k)
+	{
+		retour[k]=cryptage_char(m.tab_char[k], m.cle);
+	}
+//	printf("crypté de %s est %s avec une cle de %d \n",m.tab_char, retour,m.cle );
+	return retour;
+}
+
+void * thread_buffer(void * z)
+{
+	int i,j=0;
+	arg * a = (arg *) z;
+	if (a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].chiffrement)
+	{
+		char * retour = cryptage_mot(a->t.tab_mess[a->num_mess].tab_mots[a->num_mot]);
+		pthread_mutex_lock(a->b.mutex);
+		for (i=a->b.fin+1; i<(a->b.fin+1+a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].nb_char) ; ++i)
+		{	
+			a->b.tab_buff[i]=retour[j];
+			++j;
+		}
+		a->b.tab_buff[i]=" ";
+		a->b.fin=i+1;
+		pthread_mutex_unlock(a->b.mutex);
+	}
+	printf("buffer = %s ", a->b.tab_buff);
 	
 }
 
-void assigne_thread(traitement t, int num_mess)
+char * assigne_thread(traitement t, int num_mess)
 {
-	int j; void arg[j][2]; buffer buf = {taille_buffer, taille_buffer*malloc(*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
+	int j; 
+	buffer buf = {taille_buffer, malloc(taille_buffer*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER,0};
+	arg a={t,buf,0};
 	pthread_t * tid = malloc(t.tab_mess[num_mess].nb_mots*sizeof(tid));
 	for (j=0; j<t.tab_mess[num_mess].nb_mots; ++j)
 	{
-		arg[j][0]=t.tab_mess[num_mess].tab_mots[j]);
-		arg[j][1]= buf;
-		pthread_create(tid+j,NULL,&thread_buffer, arg[j]);
+		a.num_mot=j;
+		pthread_create(tid+j,NULL,&thread_buffer,(void *) &a);
 		pthread_join(tid[j], NULL);
-		
 	}	
+	return a.b.tab_buff;
+}
+
+void retour_cryptage(char * buf, traitement t, int num_mess)
+{
+	int i,fd;  char s, * nom_fichier = t.tab_mess[num_mess].chemin;
+	fd=open(strcat(nom_fichier, "_cypher"),O_CREAT, 0666);
+	for (i=0; i<strlen(buf)+1; ++i)
+	{
+		write(fd,buf+i,1);
+	}
+	close(fd);
+}
+
+void retour_decryptage()
+{
+	
+	
+}
+
+int traitement_message (traitement t, int num_mess)
+{
+	char * buf=assigne_thread(t, num_mess);
+	if (t.tab_mess[num_mess].chiffrement) retour_cryptage(buf, t, num_mess);
+	else retour_decryptage();
+	return 0;
+}
+
+int dechiffrement_demande(traitement t)
+{
+	int i;
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		if (t.chiffrements[i]==0)
+		return 1;
+	}
+	return 0;
+	
+}
+
+int traitement_entier (traitement t)
+{
+	int i,fd; pid_t a; int * statut; char s;
+	for (i=0; i<t.nb_messages; ++i)
+	{
+		if (!(a=fork()))
+		{
+			traitement_message(t, i);
+		}
+		else
+		wait(statut);
+		if (dechiffrement_demande(t))
+		{
+			fd=open("dechiffrement.fifo",O_RDONLY);
+			do{
+				read(fd,&s,1);
+				write(0,&s,1);
+			}while(s!='\0');
+			close(fd);
+			unlink("dechiffrement.fifo");
+		}
+	}
+	return 0;
 }

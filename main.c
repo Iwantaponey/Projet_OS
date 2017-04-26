@@ -6,5 +6,6 @@ int main (int argc, char ** argv)
 	t=extraire(argv[1]);
 	t=assigne_message(t);
 	affiche_traitement(t);
+	traitement_entier(t);
 	return 0;
 }

@@ -16,7 +16,6 @@
 
 typedef struct
 {
-	pthread_t tid; // le thread assigné au traitement de ce message
     int num_mot; // le numéro du mot dans le message 
     int nb_char; // taille du mot en caractères
     int chiffrement;
@@ -49,15 +48,26 @@ typedef struct
 {
     int taille_buff; // Taille du message
     char * tab_buff; // tableau de caractères qui contiendra l’intégralité du message
-    pthread_mutex_t mutex; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
-    pthread_cond_t cond; // variable condition qui permettra d’assurer que tous les threads ont bien terminé leur exécution avant que le processus chef d’équipe ne vienne récupérer le contenu de tab
+    pthread_mutex_t * mutex; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
+    int fin;
 }buffer;
 
+typedef struct
+{
+	traitement t;
+	buffer b;
+	int num_mess;
+	int num_mot;
+	
+}arg;
+
+/*
 typedef struct
 {
     int traite; 
     int chiffrement;    
 }retour_message;
+*/
 
 
 
@@ -67,6 +77,6 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 traitement extraire (char * nom_fichier);
 void affiche_traitement(traitement t);
 traitement assigne_message (traitement t);
-void thread_buffer(void * z);
-void assigne_thread(traitement t, int num_mess);
-char cryptage(char c, int cle);
+void * thread_buffer(void * z);
+char * assigne_thread(traitement t, int num_mess);
+char cryptage_char(char c, int cle);
