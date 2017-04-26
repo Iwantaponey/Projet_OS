@@ -1,4 +1,16 @@
-#include "extraction.h"
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <dirent.h>
+#include <time.h>
+#include <sys/times.h>
+#include <pthread.h>
+#include "fonction.h"
 
 mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char)
 {
@@ -32,7 +44,11 @@ buffer init_buffer(int taille_buff)
 int compte_nb_messages(char * nom_fichier)
 {
 	int	fd=open(nom_fichier, O_RDONLY), nb_messages=0; char s='a';
-	
+	if (fd<1) 
+	{
+		printf("Probleme avec l'ouverture du fichier \n");
+		return -1;
+	}
 	while(read(fd,&s,1) && s!='\0') // premier scan du fichier principal pour déterminer le nombre de messages à traiter
 	{
 		//printf("Le caractère lu est %c \n",s);
@@ -71,6 +87,7 @@ traitement extraire (char * nom_fichier)
 	traitement t;
 	int e=1,i,j,l,fd; char s='a'; 
 	int nb_messages=compte_nb_messages(nom_fichier), compteur=0;
+	if (nb_messages==-1) printf ("structure traitement non remplie car probleme ouverture fichier \n");
 	int cle[nb_messages][2];  int * chiffrements=malloc(nb_messages*sizeof(int));
 	char ** chemins=malloc(nb_messages*sizeof(char*));
 	for (i=0; i<nb_messages; i++)
@@ -288,4 +305,42 @@ void affiche_traitement(traitement t)
 				printf("Mot numero %d du message %d est %s \n Il a %d char, une cle de %d et un chiffrement de %d \n\n\n\n", t.tab_mess[i].tab_mots[j].num_mot, t.tab_mess[i].num_mess, t.tab_mess[i].tab_mots[j].tab_char, t.tab_mess[i].tab_mots[j].nb_char, t.tab_mess[i].tab_mots[j].cle, t.tab_mess[i].tab_mots[j].chiffrement);
 			}
 	}
+}
+
+char cryptage(char c, int cle)
+{
+	if (c < 65) return c; // avant A
+	if (c > 122) return c; // après z
+	if (c > 90 && c < 97) return c; // entre Z et a
+	if (c < 91) // si je suis une majuscule comprise entre 65 et 90
+	{
+		printf("majuscule \n");
+		c = c + cle; // Modification du caractère
+		if (c > 90) c=c-26;
+	}
+	else if (c > 96) // si je suis une minuscule comprise entre 97 et 122 
+	{
+		printf("minuscule \n");
+		c = c + cle; // Modification du caractère
+		if (c > 122) c=c-26;
+	}
+	return c;
+}
+
+void thread_buffer(void * z)
+{
+	mot * m = (mot *) z;
+	
+}
+
+void assigne_thread(traitement t, int num_mess)
+{
+	int j;
+	pthread_t * tid = malloc(t.tab_mess[num_mess].nb_mots*sizeof(tid));
+	for (j=0; j<t.tab_mess[num_mess].nb_mots; ++j)
+	{
+		pthread_create(tid+j,NULL,&thread_buffer, &(t.tab_mess[num_mess].tab_mots[j]));
+		pthread_join(tid[j], NULL);
+		
+	}	
 }
