@@ -25,7 +25,6 @@ typedef struct
 
 typedef struct 
 {
-    pid_t pid; // Identifiant du processus assigné au traitement de ce message
 	int num_mess; // Numéro du message dans le fichier principal donné en entrée
     int nb_mots; // Nombre de mots dans le message
     mot * tab_mots; // Tableau de structures mots
@@ -80,3 +79,10 @@ traitement assigne_message (traitement t);
 void * thread_buffer(void * z);
 char * assigne_thread(traitement t, int num_mess);
 char cryptage_char(char c, int cle);
+char * cryptage_mot (const mot m);
+void * thread_buffer(void * z);
+char * assigne_thread(traitement t, int num_mess);
+void retour_cryptage(char * buf, traitement t, int num_mess);
+void retour_decryptage();
+int traitement_message (traitement t, int num_mess);
+int traitement_entier (traitement t);

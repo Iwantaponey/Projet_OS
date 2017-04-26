@@ -21,9 +21,8 @@ mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char
 
 message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin)
 {
-	pid_t pid;
 	message m=
-	{pid, num_mess, nb_mots, tab_mots , chiffrement, cle, chemin};
+	{num_mess, nb_mots, tab_mots , chiffrement, cle, chemin};
 	return m;
 }
 
@@ -36,7 +35,12 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 
 buffer init_buffer(int taille_buff)
 {
-	buffer b={taille_buff, malloc(taille_buff*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
+	buffer b;
+	b.taille_buff=taille_buffer;
+	b.tab_buff=malloc(b.taille_buff*sizeof(char));
+	pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+	b.mutex=&mut;
+	b.fin=0;
 	return b;
 }
 
@@ -104,7 +108,7 @@ traitement extraire (char * nom_fichier)
 		{
 			if (s!='\n') // on traite les messages les uns apres les autres
 			{
-				printf("Traitement du message %d \n",i);
+			//	printf("Traitement du message %d \n",i);
 				if (s!=';' && compteur==0) // on recupere les chemins de chaque message si compteur vaut 0 (si on n'a pas encore vu de ; )
 				{	
 					chemins[i][j]=s;
@@ -139,7 +143,7 @@ traitement extraire (char * nom_fichier)
 	
 	for (i=0; i<nb_messages; i++)
 	{
-	 	printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
+	 //	printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
 	}
 
 	t=init_traitement(chiffrements, cle_finale, nb_messages, chemins); 
@@ -193,7 +197,6 @@ int * compte_nb_mots(int * nb_mots, traitement t)
 traitement assigne_message (traitement t)
 {
 	int fd,i,j,k,* nb_mots = malloc(t.nb_messages*sizeof(int));
-	char s='a';
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		nb_mots[i]=0;
@@ -291,14 +294,14 @@ traitement assigne_message (traitement t)
 
 void affiche_traitement(traitement t)
 {
-	printf("Il y a %d messages dans la structure traitement \n", t.nb_messages);
-	int i,j,l;
+	//printf("Il y a %d messages dans la structure traitement \n", t.nb_messages);
+	int i,j;
 	for (i=0; i<t.nb_messages; ++i)
 	{
-		printf("Le message numero %d a pour chiffrement %d, pour cle %d et pour chemin %s \n",i, t.chiffrements[i], t.cles[i], t.chemins[i]);
+		//printf("Le message numero %d a pour chiffrement %d, pour cle %d et pour chemin %s \n",i, t.chiffrements[i], t.cles[i], t.chemins[i]);
 		for (j=0; j<t.tab_mess[i].nb_mots; ++j)
 			{
-				printf("Mot numero %d du message %d est %s \n Il a %d char, une cle de %d et un chiffrement de %d \n\n\n\n", t.tab_mess[i].tab_mots[j].num_mot, t.tab_mess[i].num_mess, t.tab_mess[i].tab_mots[j].tab_char, t.tab_mess[i].tab_mots[j].nb_char, t.tab_mess[i].tab_mots[j].cle, t.tab_mess[i].tab_mots[j].chiffrement);
+			//	printf("Mot numero %d du message %d est %s \n Il a %d char, une cle de %d et un chiffrement de %d \n\n\n\n", t.tab_mess[i].tab_mots[j].num_mot, t.tab_mess[i].num_mess, t.tab_mess[i].tab_mots[j].tab_char, t.tab_mess[i].tab_mots[j].nb_char, t.tab_mess[i].tab_mots[j].cle, t.tab_mess[i].tab_mots[j].chiffrement);
 			}
 	}
 }
@@ -310,13 +313,13 @@ char cryptage_char(char c, int cle)
 	if (c > 90 && c < 97) return c; // entre Z et a
 	if (c < 91) // si je suis une majuscule comprise entre 65 et 90
 	{
-		printf("majuscule \n");
+		//printf("majuscule \n");
 		c = c + cle; // Modification du caractère
 		if (c > 90) c=c-26;
 	}
 	else if (c > 96) // si je suis une minuscule comprise entre 97 et 122 
 	{
-		printf("minuscule \n");
+		//printf("minuscule \n");
 		c = c + cle; // Modification du caractère
 		if (c > 122) c=c-26;
 	}
@@ -336,15 +339,19 @@ char * cryptage_mot (const mot m)
 
 void * thread_buffer(void * z)
 {
+	printf("dans thread buffer \n");
 	int i,j=0;
 	arg * a = (arg *) z;
 	if (a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].chiffrement)
 	{
+		printf("mot a traiter est %s ",a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].tab_char);
 		char * retour = cryptage_mot(a->t.tab_mess[a->num_mess].tab_mots[a->num_mot]);
+		printf("retour = %s \n",retour);
 		pthread_mutex_lock(a->b.mutex);
-		for (i=a->b.fin+1; i<(a->b.fin+1+a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].nb_char) ; ++i)
-		{	
+		for (i=a->b.fin; i<(a->b.fin+a->t.tab_mess[a->num_mess].tab_mots[a->num_mot].nb_char) ; ++i)
+		{		
 			a->b.tab_buff[i]=retour[j];
+			printf("le caractere %c est entre sur le buffer" , a->b.tab_buff[i]);
 			++j;
 		}
 		a->b.tab_buff[i]=" ";
@@ -352,19 +359,22 @@ void * thread_buffer(void * z)
 		pthread_mutex_unlock(a->b.mutex);
 	}
 	printf("buffer = %s ", a->b.tab_buff);
-	
+	return (void*)a;
 }
 
 char * assigne_thread(traitement t, int num_mess)
 {
+	printf("dans assigne thread \n");
 	int j; 
-	buffer buf = {taille_buffer, malloc(taille_buffer*sizeof(char)), PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER,0};
-	arg a={t,buf,0};
+	buffer buf = init_buffer(taille_buffer);
+	arg a={t,buf,num_mess,0};
 	pthread_t * tid = malloc(t.tab_mess[num_mess].nb_mots*sizeof(tid));
 	for (j=0; j<t.tab_mess[num_mess].nb_mots; ++j)
 	{
+		printf("j = %d \n",j);
+		printf("mot a traiter dans assigne thread est %s \n",t.tab_mess[num_mess].tab_mots[j].tab_char);
 		a.num_mot=j;
-		pthread_create(tid+j,NULL,&thread_buffer,(void *) &a);
+		pthread_create(tid+j,NULL,&thread_buffer,&a);
 		pthread_join(tid[j], NULL);
 	}	
 	return a.b.tab_buff;
@@ -372,7 +382,7 @@ char * assigne_thread(traitement t, int num_mess)
 
 void retour_cryptage(char * buf, traitement t, int num_mess)
 {
-	int i,fd;  char s, * nom_fichier = t.tab_mess[num_mess].chemin;
+	int i,fd;  char * nom_fichier = t.tab_mess[num_mess].chemin;
 	fd=open(strcat(nom_fichier, "_cypher"),O_CREAT, 0666);
 	for (i=0; i<strlen(buf)+1; ++i)
 	{
@@ -389,6 +399,9 @@ void retour_decryptage()
 
 int traitement_message (traitement t, int num_mess)
 {
+	int i;
+	for (i=0; i<t.tab_mess[num_mess].nb_mots; ++i)
+		printf("dans traitement message du message %d, mot %d est %s \n", num_mess, i, t.tab_mess[num_mess].tab_mots[i].tab_char);
 	char * buf=assigne_thread(t, num_mess);
 	if (t.tab_mess[num_mess].chiffrement) retour_cryptage(buf, t, num_mess);
 	else retour_decryptage();
@@ -414,6 +427,7 @@ int traitement_entier (traitement t)
 	{
 		if (!(a=fork()))
 		{
+			printf("fork \n");
 			traitement_message(t, i);
 		}
 		else
