@@ -9,3 +9,9 @@ dans un thread
 il faut déjà qu'on gère les fork !! pour les processus fils et les messages
 normalement c est le processus fils qui fait le découpage
 donc il faut que les processus fils soient appelés dans extraction je pense
+
+
+Rapport : 2/3 pages max
+Choix de conception / découpage du programme
+Qui a fait quoi
+Problèmes rencontrés
