@@ -29,7 +29,6 @@ buffer init_buffer(int taille_buff)
 	b.mutex=&mut; b.cond=&cond;
 	pthread_mutex_init(b.mutex, NULL);
 	pthread_cond_init(b.cond, NULL);
-	b.fin=0;
 	return b;
 }
 
@@ -294,21 +293,33 @@ void affiche_traitement(traitement t)
 
 char cryptage_char(char c, int cle)
 {
+	
 	if (c < 65) return c; // avant A
 	if (c > 122) return c; // après z
 	if (c > 90 && c < 97) return c; // entre Z et a
-	
 	if (c < 91) // si je suis une majuscule comprise entre 65 et 90
 	{
-		//printf("majuscule \n");
-		c = c + cle; // Modification du caractère
-		if (c > 90) c = c - 26;
+		if (c+cle<128)
+		{	
+			c = c + cle; // Modification du caractère
+			if (c > 90) c=c-26;
+		}
+		else
+		{	
+			c=c+cle-26;
+		}
 	}
 	else if (c > 96) // si je suis une minuscule comprise entre 97 et 122 
 	{
-		//printf("minuscule \n");
-		c = c + cle; // Modification du caractère
-		if (c > 122) c = c - 26;
+		if (c+cle<128)
+		{
+			c = c + cle; // Modification du caractère
+			if (c > 122) c=c-26;
+		}
+		else
+		{	
+			c=c+cle-26;
+		}
 	}
 	return c;
 }
@@ -412,6 +423,20 @@ void * thread_buffer(void * z)
 		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
 	}
 	
+	/*int nb_mots_traites=0;
+	if(nb_mots_traites!=a->nb_mots)
+	{
+		pthread_mutex_lock(a->b.mutex);
+		nb_mots_traites++;
+		pthread_cond_wait(a->b.cond,a->b.mutex);
+		pthread_mutex_unlock(a->b.mutex);
+	}
+	else
+	while(nb_mots_traites)
+	{
+		pthread_cond_signal(a->b.cond);
+		nb_mots_traites--;
+	}*/
 	printf("buffer = %s \n", a->b.tab_buff);
 	return NULL; 
 }
@@ -433,6 +458,7 @@ int traitement_message(message m)
 		printf("AVANT dans traitement message du message %d, mot %d est %s \n", m.num_mess, i, m.tab_mots[i].tab_char);
 		tab_arg[i].w=m.tab_mots[i];
 		tab_arg[i].b=b;
+		tab_arg[i].nb_mots=m.nb_mots;
 		tab_arg[i].emplacement=emplace[i];
 		printf("emplacement[%d]=%d \n", i, tab_arg[i].emplacement);
 	}
