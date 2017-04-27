@@ -371,13 +371,27 @@ char * decryptage_mot(const mot m)
 
 void retour_cryptage(char * buf, message m)
 {
-	int i,fd;  char * nom_fichier = m.chemin;
-	fd=open(strcat(nom_fichier, "_cypher"),O_CREAT | O_WRONLY, 0666);
-	for (i=0; i<strlen(buf)+1; ++i)
+	int e,i,fd,fd2;  char c='a', * nom_fichier = m.chemin;
+	fd=open(nom_fichier, O_RDONLY);
+	fd2=open(strcat(nom_fichier, "_cypher"),O_CREAT | O_WRONLY, 0666);
+	i=0;
+	while (read(fd,&c,1))
 	{
-		write(fd,buf+i,1);
+		printf("le caractere lu dans retour_cryptage est %c \n",c);
+		if(c!=' ' && c!='\t' && c!='\n')
+		{	
+			printf("dans le if \n");
+			write(fd2,buf+i,1);
+			++i;
+		}
+		else
+		{
+			printf("dans le else \n");
+			write(fd2,&c,1);
+		}
 	}
 	close(fd);
+	close(fd2);
 }
 
 void retour_decryptage()
@@ -402,8 +416,7 @@ void * thread_buffer(void * z)
 			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
 			++j; 	
 			++i;																			
-		}
-		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace															// on met la fin du buffer sur l'espace
+		} 																					
 		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
 	}
 	else
@@ -450,7 +463,7 @@ int traitement_message(message m)
 	int i=0; emplace[0]=0;
 	while(i<m.nb_mots-1)
 	{
-		emplace[i+1]=emplace[i]+(m.tab_mots[i].nb_char)+1;
+		emplace[i+1]=emplace[i]+(m.tab_mots[i].nb_char);
 		++i;
 	}
 	for (i=0; i<m.nb_mots; ++i)
@@ -531,7 +544,6 @@ void libere_message(message m)
 	free(m.tab_mots);
 	
 }
-
 
 void libere_traitement(traitement t)
 {
