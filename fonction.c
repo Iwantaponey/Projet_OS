@@ -439,8 +439,8 @@ int traitement_message(message m)
 	for (i=0; i<m.nb_mots; ++i)
 	{
 		printf("AVANT dans traitement message du message %d, mot %d est %s \n", m.num_mess, i, m.tab_mots[i].tab_char);
-		arg[i].w=m.tab_mots[i];
-		arg[i].b=b;
+		tab_arg[i].w=m.tab_mots[i];
+		tab_arg[i].b=b;
 	}
 	for (i=0; i<m.nb_mots; ++i)
 	{
@@ -448,7 +448,7 @@ int traitement_message(message m)
 		pthread_join(tab_thread[i], NULL);
 	}
 	
-	if (m.chiffrement) retour_cryptage(buf, m);
+	if (m.chiffrement) retour_cryptage(b.tab_buff, m);
 	else retour_decryptage();
 	return 0;
 }
