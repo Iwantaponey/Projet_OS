@@ -12,7 +12,7 @@
 #include <pthread.h>
 
 #define taille_max_chemin 1024
-#define taille_buffer 2048
+#define taille_buffer 100	
 
 typedef struct
 {
@@ -45,8 +45,7 @@ typedef struct //
 
 typedef struct 
 {
-    int taille_buff; // Taille du message
-    char * tab_buff; // tableau de caractères qui contiendra l’intégralité du message
+	char tab_buff[taille_buffer]; // tableau de caractères qui contiendra l’intégralité du message
     pthread_mutex_t * mutex; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
     int fin;
 }buffer;
