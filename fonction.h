@@ -53,11 +53,8 @@ typedef struct
 
 typedef struct
 {
-	traitement t;
-	buffer b;
-	int num_mess;
-	int num_mot;
-	
+	mot w; // mot que le thread aura à traiter
+	buffer b; // buffer que les threads utiliseront pour rendre leur travail;
 }arg;
 
 /*
@@ -77,12 +74,16 @@ traitement extraire (char * nom_fichier);
 void affiche_traitement(traitement t);
 traitement assigne_message (traitement t);
 void * thread_buffer(void * z);
-char * assigne_thread(traitement t, int num_mess);
 char cryptage_char(char c, int cle);
 char * cryptage_mot (const mot m);
+char decryptage_char(char c, int cle);
+char * decryptage_mot (const mot m);
 void * thread_buffer(void * z);
 char * assigne_thread(traitement t, int num_mess);
-void retour_cryptage(char * buf, traitement t, int num_mess);
+void retour_cryptage(char * buf, message m);
 void retour_decryptage();
-int traitement_message (traitement t, int num_mess);
+int traitement_message (message m;);
 int traitement_entier (traitement t);
+void libere_mot(mot m);
+void libere_message(message m);
+void libere_traitement(traitement t);

@@ -7,5 +7,6 @@ int main (int argc, char ** argv)
 	t=assigne_message(t);
 	affiche_traitement(t);
 	traitement_entier(t);
+	libere_traitement(t);
 	return 0;
 }
