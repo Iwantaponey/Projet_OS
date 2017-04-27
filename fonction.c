@@ -382,8 +382,6 @@ void * thread_buffer(void * z)
 		printf("mot a traiter est %s ",a->w.tab_char);
 		retour = cryptage_mot(a->w);
 		printf("retour = %s \n",retour);
-		//pthread_mutex_lock(a->b.mutex); 					// début section critique, la variable critique est le buffer
-		printf("juste derriere");
 		printf("debut buffer = %d",a->b.fin+1);
 		for (i=a->b.fin; i<(a->b.fin+a->w.nb_char); i++) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
 		{		
@@ -392,7 +390,7 @@ void * thread_buffer(void * z)
 			++j; 																				// on avance dans le mot traité
 		}
 		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace
-		a->b.fin=i+1; 																				// on met la fin du buffer sur l'espace
+		a->b.fin=i+1; 															// on met la fin du buffer sur l'espace
 		printf("fin buffer = %d",i);
 		//pthread_mutex_unlock(a->b.mutex); 						// fin variable critique
 		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
