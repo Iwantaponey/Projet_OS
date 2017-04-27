@@ -24,9 +24,11 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 buffer init_buffer(int taille_buff)
 {
 	buffer b;
-	pthread_mutex_t mut;
-	b.mutex=&mut;
+	pthread_mutex_t mut; pthread_cond_t cond;
+	b.tab_buff=malloc(taille_buffer*sizeof(char));
+	b.mutex=&mut; b.cond=&cond;
 	pthread_mutex_init(b.mutex, NULL);
+	pthread_cond_init(b.cond, NULL);
 	b.fin=0;
 	return b;
 }
@@ -374,49 +376,42 @@ void retour_decryptage()
 
 void * thread_buffer(void * z)
 {
+	arg * a = (arg *) z; 
 	printf("dans thread buffer \n");
-	int i,j=0; char * retour; 												// retour va contenir le mot traité
-	arg * a = (arg *) z; 											// on caste 
+	int i=a->emplacement,j=0; char * retour; 												// retour va contenir le mot traité
 	if (a->w.chiffrement) 					// si il faut chiffrer alors
 	{
-		printf("mot a traiter est %s ",a->w.tab_char);
+		printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
 		retour = cryptage_mot(a->w);
 		printf("retour = %s \n",retour);
-		printf("debut buffer = %d",a->b.fin+1);
-		for (i=a->b.fin; i<(a->b.fin+a->w.nb_char); i++) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
+		printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
+		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
 		{		
 			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
 			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
-			++j; 																				// on avance dans le mot traité
+			++j; 	
+			++i;																			
 		}
-		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace
-		a->b.fin=i+1; 															// on met la fin du buffer sur l'espace
-		printf("fin buffer = %d",i);
-		//pthread_mutex_unlock(a->b.mutex); 						// fin variable critique
+		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace															// on met la fin du buffer sur l'espace
 		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
 	}
 	else
 	{
-		printf("mot a traiter est %s ",a->w.tab_char);
-		retour = decryptage_mot(a->w);
+		printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
+		retour = cryptage_mot(a->w);
 		printf("retour = %s \n",retour);
-		pthread_mutex_lock(a->b.mutex); // début section critique, la variable critique est le buffer
-		printf("debut buffer = %d",a->b.fin+1);
-		for (i=a->b.fin+1; i<(a->b.fin+1+a->w.nb_char); ++i) // on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
+		printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
+		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
 		{		
-			a->b.tab_buff[i]=retour[j]; // on écrit caractère par caractère le mot traité dans le buffer
-			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); // on affiche ce qu'on met dans le buffer
-			++j; // on avance dans le mot traité
+			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
+			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
+			++j; 	
+			++i;																			
 		}
-		a->b.tab_buff[i]=' '; // apres avoir traité le mot, on met un espace
-		a->b.fin=i; // on met la fin du buffer sur l'espace
-		printf("fin buffer = %d",i);
-		pthread_mutex_unlock(a->b.mutex); // fin variable critique
-		free(retour); // on libère le mot traité car il a bien été mis dans le buffer	
+		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace															// on met la fin du buffer sur l'espace
+		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
 	}
 	
-	for (i=0; i<a->b.fin+1; ++i)
-	printf("buffer[%d]=%c \n",i,a->b.tab_buff[i]);
 	printf("buffer = %s \n", a->b.tab_buff);
 	return NULL; 
 }
@@ -425,15 +420,21 @@ void * thread_buffer(void * z)
 int traitement_message(message m)
 {
 	buffer b=init_buffer(taille_buffer); // le buffer qui sera utilisé par les threads pour le message
-	arg * tab_arg=malloc(m.nb_mots*sizeof(arg));
+	arg * tab_arg=malloc(m.nb_mots*sizeof(arg)); int emplace[m.nb_mots];
 	pthread_t * tab_thread = malloc(m.nb_mots*sizeof(pthread_t)); // on aura autant de threads que de mots à traiter
-	printf("dans traitement message %d", m.num_mess);
-	int i; 
+	int i=0; emplace[0]=0;
+	while(i<m.nb_mots-1)
+	{
+		emplace[i+1]=emplace[i]+(m.tab_mots[i].nb_char)+1;
+		++i;
+	}
 	for (i=0; i<m.nb_mots; ++i)
 	{
 		printf("AVANT dans traitement message du message %d, mot %d est %s \n", m.num_mess, i, m.tab_mots[i].tab_char);
 		tab_arg[i].w=m.tab_mots[i];
 		tab_arg[i].b=b;
+		tab_arg[i].emplacement=emplace[i];
+		printf("emplacement[%d]=%d \n", i, tab_arg[i].emplacement);
 	}
 	for (i=0; i<m.nb_mots; ++i)
 	{
@@ -459,7 +460,7 @@ int dechiffrement_demande(traitement t)
 
 int traitement_entier(traitement t)
 {
-	printf("dans traitement entier");
+	printf("dans traitement entier \n");
 	int i,fd; pid_t a; char s;
 	for (i=0; i<t.nb_messages; ++i)
 	{

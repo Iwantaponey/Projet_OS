@@ -45,15 +45,17 @@ typedef struct //
 
 typedef struct 
 {
-	char tab_buff[taille_buffer]; // tableau de caractères qui contiendra l’intégralité du message
+	char * tab_buff; // tableau de caractères qui contiendra l’intégralité du message
     pthread_mutex_t * mutex; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
+    pthread_cond_t * cond; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
     int fin;
 }buffer;
 
 typedef struct
 {
 	mot w; // mot que le thread aura à traiter
-	buffer b; // buffer que les threads utiliseront pour rendre leur travail;
+	buffer b; // buffer que les threads utiliseront pour rendre leur travail
+	int emplacement; // emplacement ou on commence à écrire dans le buffer 
 }arg;
 
 /*
