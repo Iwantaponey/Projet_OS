@@ -15,3 +15,4 @@ fonction.o : fonction.c fonction.h
 clean: 
 	rm -rf *.o
 	rm -rf cesar
+	rm -rf *_cypher
