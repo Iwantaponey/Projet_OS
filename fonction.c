@@ -372,7 +372,7 @@ char * decryptage_mot(const mot m)
 void retour_cryptage(char * buf, message m)
 {
 	int i,fd;  char * nom_fichier = m.chemin;
-	fd=open(strcat(nom_fichier, "_cypher"),O_CREAT, 0666);
+	fd=open(strcat(nom_fichier, "_cypher"),O_CREAT | O_WRONLY, 0666);
 	for (i=0; i<strlen(buf)+1; ++i)
 	{
 		write(fd,buf+i,1);
@@ -467,7 +467,7 @@ int traitement_message(message m)
 		pthread_create(tab_thread+i, NULL, &thread_buffer, &(tab_arg[i]));
 		pthread_join(tab_thread[i], NULL);
 	}
-	
+	printf(" RETOUR TRAITEMENT MESSAGE buffer = %s \n",b.tab_buff);
 	if (m.chiffrement) retour_cryptage(b.tab_buff, m);
 	else retour_decryptage();
 	return 0;

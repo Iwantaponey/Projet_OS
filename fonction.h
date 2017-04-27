@@ -58,13 +58,9 @@ typedef struct
 	int nb_mots;
 }arg;
 
-/*
-typedef struct
-{
-    int traite; 
-    int chiffrement;    
-}retour_message;
-*/
+
+
+
 
 
 
