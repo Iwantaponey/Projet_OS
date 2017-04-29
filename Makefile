@@ -16,3 +16,4 @@ clean:
 	rm -rf *.o
 	rm -rf cesar
 	rm -rf *_cypher
+	rm -rf *_decypher

@@ -40,13 +40,13 @@ int compte_nb_messages(char * nom_fichier)
 		printf("Probleme avec l'ouverture du fichier \n");
 		return -1;
 	}
-	while(read(fd,&s,1) && s!='\0') // premier scan du fichier principal pour déterminer le nombre de messages à traiter
+	while(read(fd,&s,1)) // premier scan du fichier principal pour déterminer le nombre de messages à traiter
 	{
 		//printf("Le caractère lu est %c \n",s);
 		if (s=='\n') 
 		{
 			++nb_messages;
-			printf("Il y a %d messages a traiter dans %s \n", nb_messages, nom_fichier);
+			//printf("Il y a %d messages a traiter dans %s \n", nb_messages, nom_fichier);
 		}
 	}	
 	close(fd);
@@ -87,10 +87,11 @@ traitement extraire(char * nom_fichier)
 	}
 	i=j=l=0;
 	fd=open(nom_fichier, O_RDONLY);
-	while(e && s!='\0' && i<nb_messages && j<taille_max_chemin) // boucle pour la lecture du fichier principal
+	while(e && i<nb_messages && j<taille_max_chemin) // boucle pour la lecture du fichier principal
 	{	
 		e=read(fd,&s,1); // on lit les caracteres l un apres l autre
-		if (!e) {printf("Erreur de lecture du fichier principal \n");}
+		if (!e) {//printf("Erreur de lecture du fichier principal \n");
+			}
 		else
 		{
 			if (s!='\n') // on traite les messages les uns apres les autres
@@ -129,7 +130,7 @@ traitement extraire(char * nom_fichier)
 	
 	for (i=0; i<nb_messages; i++)
 	{
-	 //	printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
+	// 	printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
 	}
 	t=init_traitement(chiffrements, cle_finale, nb_messages, chemins); 
 	return t;
@@ -159,9 +160,9 @@ int * compte_nb_mots(int * nb_mots, traitement t)
 	for (i=0; i<t.nb_messages; ++i)
 	{	
 		fd=open(t.chemins[i], O_RDONLY);
-		while(read(fd,&s,1) && s!='\0')
+		while(read(fd,&s,1))
 		{	
-			if ((s==' '|| s=='\n' || s=='\0' || s=='\t'))
+			if ((s==' '|| s=='\n' || s=='\t'))
 			{	if (compteur==0)
 				{
 					nb_mots[i]=nb_mots[i]+1; 
@@ -235,7 +236,7 @@ traitement assigne_message(traitement t)
 			for (k=0; k<nb_char[i][j]; ++k)
 				{
 					read(fd,&(tab_mess[i][j][k]),1);
-					while (tab_mess[i][j][k]!='\0' && (tab_mess[i][j][k]==' ' || tab_mess[i][j][k]=='\n'))
+					while (tab_mess[i][j][k]==' ' || tab_mess[i][j][k]=='\n')
 						read(fd,&(tab_mess[i][j][k]),1);
 				}
 		}
@@ -365,97 +366,146 @@ char * decryptage_mot(const mot m)
 	{
 		retour[k] = decryptage_char(m.tab_char[k], m.cle);
 	}
-	printf("decrypté de %s est %s avec une cle de %d \n",m.tab_char, retour,m.cle );
+	//printf("decrypté de %s est %s avec une cle de %d \n",m.tab_char, retour,m.cle );
 	return retour;
 }
 
 void retour_cryptage(char * buf, message m)
 {
-	int e,i,fd,fd2;  char c='a', * nom_fichier = m.chemin;
+	int i,fd,fd2;  char c='a', * nom_fichier = m.chemin;
 	fd=open(nom_fichier, O_RDONLY);
 	fd2=open(strcat(nom_fichier, "_cypher"),O_CREAT | O_WRONLY, 0666);
 	i=0;
 	while (read(fd,&c,1))
 	{
-		printf("le caractere lu dans retour_cryptage est %c \n",c);
+		//printf("le caractere lu dans retour_cryptage est %c \n",c);
 		if(c!=' ' && c!='\t' && c!='\n')
 		{	
-			printf("dans le if \n");
+			//printf("dans le if \n");
 			write(fd2,buf+i,1);
 			++i;
 		}
 		else
 		{
-			printf("dans le else \n");
+			//printf("dans le else \n");
 			write(fd2,&c,1);
+			//printf("apres le write de %c",c);
 		}
 	}
 	close(fd);
 	close(fd2);
 }
 
-void retour_decryptage()
+void retour_decryptage(char * buf, message m)
 {
-	
+	int j=0,fd;  char * nom_fichier = strcat(m.chemin, "_decypher");
+	fd=open(nom_fichier,O_CREAT | O_WRONLY, 0666); // on ouvre le fichier
+	do{
+		write(fd,buf+j,1);
+		++j;
+	}while(buf[j]!='\0');
+	close(fd);
 }
 
-void * thread_buffer(void * z)
+void affiche_decryptage(const message m)
 {
-	arg * a = (arg *) z; 
-	printf("dans thread buffer \n");
-	int i=a->emplacement,j=0; char * retour; 												// retour va contenir le mot traité
-	if (a->w.chiffrement) 					// si il faut chiffrer alors
-	{
-		printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
-		retour = cryptage_mot(a->w);
-		printf("retour = %s \n",retour);
-		printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
-		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
-		{		
-			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
-			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
-			++j; 	
-			++i;																			
-		} 																					
-		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
-	}
-	else
-	{
-		printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
-		retour = cryptage_mot(a->w);
-		printf("retour = %s \n",retour);
-		printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
-		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
-		{		
-			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
-			printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
-			++j; 	
-			++i;																			
-		}
-		a->b.tab_buff[i]=' '; 																					// apres avoir traité le mot, on met un espace															// on met la fin du buffer sur l'espace
-		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
-	}
+	//printf("dans affiche_decryptage \n");
 	
-	/*int nb_mots_traites=0;
-	if(nb_mots_traites!=a->nb_mots)
+	int fd,fd2;  char c='a', s='a', * nom_fichier=m.chemin; 
+	fd=open(nom_fichier, O_RDONLY);
+	char * nom_fichier_d = strcat(m.chemin, "_decypher");
+	fd2=open(nom_fichier_d, O_RDONLY);
+	while (read(fd,&c,1))
+	{
+		//printf("le caractere %c a ete lu dans le fichier %s \n", c, nom_fichier);
+		if(c!=' ' && c!='\t' && c!='\n')
+		{	
+			read(fd2,&s,1);
+			write(0,&s,1);
+		}
+		else
+		{
+			write(0,&c,1);
+		}
+	}
+	if (c!='\n') 
+	{
+		s='\n'; 
+		write (0,&s,1);
+	}
+	close(fd);
+	close(fd2);
+}
+/*
+void barrier(arg * a)
+{
+	printf("dans barriere");
+	if(a->compteur+1!=a->nb_mots)
 	{
 		pthread_mutex_lock(a->b.mutex);
-		nb_mots_traites++;
+		a->compteur=a->compteur+1;
 		pthread_cond_wait(a->b.cond,a->b.mutex);
 		pthread_mutex_unlock(a->b.mutex);
 	}
 	else
-	while(nb_mots_traites)
+	while(a->compteur>0)
 	{
 		pthread_cond_signal(a->b.cond);
-		nb_mots_traites--;
-	}*/
-	printf("buffer = %s \n", a->b.tab_buff);
+		a->compteur=a->compteur-1;
+	}
+}
+*/
+void * thread_buffer(void * z)
+{
+	arg * a = (arg *) z; 
+	//printf("dans thread buffer, il y a %d mots dans le message \n", a->nb_mots);
+	int i=a->emplacement,j=0; char * retour; 												// retour va contenir le mot traité
+	if (a->w.chiffrement) 					// si il faut chiffrer alors
+	{
+		//printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
+		retour = cryptage_mot(a->w);
+		//printf("retour = %s \n",retour);
+		//printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
+		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
+		{		
+			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
+			//printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
+			++j; 	
+			++i;				
+			//printf("fin while \n");															
+		}
+		
+		//printf("juste avant barrier");
+		//barrier(a);
+		//printf("avant le free \n");																		
+		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
+	}
+	else
+	{
+		//printf("mot a traiter est %s , il fait %d char \n",a->w.tab_char, a->w.nb_char);
+		retour = decryptage_mot(a->w);
+		//printf("retour = %s \n",retour);
+		//printf("je dois écrire à l'emplacement %d du buffer \n", a->emplacement);
+		while(i<(a->emplacement)+(a->w.nb_char)) 																		//on commence au prochain caractère libre et on va écrire tout le mot traité dans le buffer, le mot traité ayant la meme taille que le mot non traité
+		{		
+			a->b.tab_buff[i]=retour[j]; 																		// on écrit caractère par caractère le mot traité dans le buffer
+			//printf("le caractere %c est entre sur le buffer \n" , a->b.tab_buff[i]); 						// on affiche ce qu'on met dans le buffer
+			++j; 	
+			++i;				
+			//printf("fin while \n");															
+		}
+		
+		//printf("juste avant barrier");
+		//barrier(a);
+		//printf("avant le free \n");																		
+		free(retour); 																// on libère le mot traité car il a bien été mis dans le buffer
+	}
+	//printf("buffer = %s \n", a->b.tab_buff);
 	return NULL; 
 }
 
 
-int traitement_message(message m)
+char * traitement_message(message m)
 {
 	buffer b=init_buffer(taille_buffer); // le buffer qui sera utilisé par les threads pour le message
 	arg * tab_arg=malloc(m.nb_mots*sizeof(arg)); int emplace[m.nb_mots];
@@ -468,22 +518,27 @@ int traitement_message(message m)
 	}
 	for (i=0; i<m.nb_mots; ++i)
 	{
-		printf("AVANT dans traitement message du message %d, mot %d est %s \n", m.num_mess, i, m.tab_mots[i].tab_char);
+		//printf("AVANT dans traitement message du message %d, mot %d est %s \n", m.num_mess, i, m.tab_mots[i].tab_char);
 		tab_arg[i].w=m.tab_mots[i];
 		tab_arg[i].b=b;
 		tab_arg[i].nb_mots=m.nb_mots;
 		tab_arg[i].emplacement=emplace[i];
-		printf("emplacement[%d]=%d \n", i, tab_arg[i].emplacement);
+		tab_arg[i].compteur=0;
+		//printf("emplacement[%d]=%d \n", i, tab_arg[i].emplacement);
 	}
 	for (i=0; i<m.nb_mots; ++i)
 	{
 		pthread_create(tab_thread+i, NULL, &thread_buffer, &(tab_arg[i]));
 		pthread_join(tab_thread[i], NULL);
 	}
-	printf(" RETOUR TRAITEMENT MESSAGE buffer = %s \n",b.tab_buff);
+	//printf("le mode du message est %d \n", m.chiffrement);
+	//printf(" RETOUR TRAITEMENT MESSAGE buffer = %s \n",b.tab_buff);
 	if (m.chiffrement) retour_cryptage(b.tab_buff, m);
-	else retour_decryptage();
-	return 0;
+	else retour_decryptage(b.tab_buff, m);
+	free(b.tab_buff);
+	free(tab_arg);
+	free(tab_thread);
+	return b.tab_buff;
 }
 
 int dechiffrement_demande(traitement t)
@@ -492,39 +547,35 @@ int dechiffrement_demande(traitement t)
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		if (t.chiffrements[i]==0)
-		return 1;
+		return i;
 	}
-	return 0;
+	return -1;
 }
+
 
 int traitement_entier(traitement t)
 {
-	printf("dans traitement entier \n");
-	int i,fd; pid_t a; char s;
+	//printf("dans traitement entier \n");
+	int i; pid_t a;
 	for (i=0; i<t.nb_messages; ++i)
 	{
 		if (!(a=fork()))
 		{
-			printf("fork \n");
+			//printf("fork \n");
+			//printf("traitement du message %d \n",i+1);
 			traitement_message(t.tab_mess[i]);
 			exit(0);
 		}
 		else
 		{
 			wait(NULL);
-			if (dechiffrement_demande(t))
-			{
-				fd=open("dechiffrement.fifo",O_RDONLY);
-				do{
-					read(fd,&s,1);
-					write(0,&s,1);
-				}while(s!='\0');
-				close(fd);
-				unlink("dechiffrement.fifo");
+			//printf("le message %d a ete traite \n",i+1);
+			if (t.tab_mess[i].chiffrement==0)
+			{	
+				affiche_decryptage(t.tab_mess[i]);
 			}
-		}
-	}
-		
+		}	
+	}	
 	return 0;
 }
 
