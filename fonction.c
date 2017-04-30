@@ -677,6 +677,7 @@ void affiche_decryptage(const message m)
 	write (0, &s, 1);
 	close(fd);
 	close(fd2);
+	unlink(nom_fichier_d);
 }
 
 
