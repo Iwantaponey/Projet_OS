@@ -282,7 +282,7 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 		fd = open(t.chemins[i], O_RDONLY);
 		for(j = 0; j < nb_mots[i]; ++j)
 		{
-			while(read(fd, &s, 1) && (s != ' ') && (s != '\n'))
+			while(read(fd, &s, 1) && (s != ' ') && (s != '\n') && (s!='\t'))
 			nb_char[i][j] = nb_char[i][j] + 1;
 		}
 		close(fd);
@@ -377,7 +377,7 @@ traitement assigne_message(traitement t)
 			for (k = 0; k < nb_char[i][j]; ++k)
 				{
 					read(fd, &(tab_mess[i][j][k]), 1);
-					while ((tab_mess[i][j][k] == ' ') || (tab_mess[i][j][k] == '\n'))
+					while ((tab_mess[i][j][k] == ' ') || (tab_mess[i][j][k] == '\n') || (tab_mess[i][j][k] == '\t'))
 						read(fd, &(tab_mess[i][j][k]), 1);
 				}
 		}
