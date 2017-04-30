@@ -62,7 +62,7 @@ message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, in
  */
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins)
 {
-	traitement t = { chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };
+	traitement t = {1, chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };
 	return t;
 }
 
@@ -96,7 +96,6 @@ int compte_nb_messages(char * nom_fichier)
 	int	fd = open(nom_fichier, O_RDONLY), nb_messages = 0; char s = 'a';
 	if (fd < 1) 
 	{
-		printf("Probleme avec l'ouverture du fichier \n");
 		return -1;
 	}
 	while(read(fd, &s, 1)) 				/*!< Premier scan du fichier principal pour déterminer le nombre de messages à traiter */
@@ -130,7 +129,7 @@ int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
 	{
 		if (cle[i][1] != -1)
 		{
-			cle_finale[i] = ((10 * cle[i][0]) + cle[i][1]);
+			cle_finale[i] = ((10 * cle[i][0]) + cle[i][1])%26;
 			//printf("Il y a l'entier %d dans le tableau cle_finale a la case %d \n", cle_finale[i],i);
 		}
 		else
@@ -154,10 +153,15 @@ int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
  */
 traitement extraire(char * nom_fichier)
 {	
-	traitement t;
-	int e = 1, i = 0, j = 0, l = 0, fd = -1; char s = 'a'; 
+	traitement t; t.initialise=0;
+	int e = 1, i, j, l, k, fd = -1; char s = 'a'; 
 	int nb_messages = compte_nb_messages(nom_fichier), compteur = 0;
-	if (nb_messages == -1) printf ("Structure traitement non remplie, problème d'ouverture du fichier \n");
+	if (nb_messages == -1)
+	{
+		printf ("Structure traitement non remplie, problème d'ouverture du fichier principal \n");
+		return t;
+	}	
+	
 	int cle[nb_messages][2];  
 	int * chiffrements = malloc(nb_messages * sizeof(int));
 	char ** chemins = malloc(nb_messages * sizeof(char*));
@@ -166,7 +170,7 @@ traitement extraire(char * nom_fichier)
 		chemins[i] = malloc(taille_max_chemin * sizeof(char));
 		cle[i][1] = -1;
 	}
-	i = j = l = 0;
+	i = j = l = k = 0;
 	fd = open(nom_fichier, O_RDONLY);
 	while(e && (i < nb_messages) && (j < taille_max_chemin)) 		/*!< Lecture du fichier principal */
 	{	
@@ -174,6 +178,7 @@ traitement extraire(char * nom_fichier)
 		if (!e) 
 		{													
 			printf("Erreur de lecture du fichier principal \n");
+			return t;
 		}
 		else
 		{
@@ -189,21 +194,60 @@ traitement extraire(char * nom_fichier)
 				if (s == ';') ++compteur; 							/*!< Quand on rencontre un ';' on augmente le compteur */
 				if ((s != ';') && (compteur == 1)) 					/*!< Récupérer la clé de chaque message si compteur vaut 1 (donc si on a vu un seul ';' ) */
 				{
+					if ((s<48) || (s>57))
+					{
+						printf("erreur : la cle n est pas correcte pour le message %d \n", i+1);
+						close(fd);
+						return t;
+					}
+					if (l>1)
+					{
+						printf("erreur : la cle est supérieure à 99 pour le message %d \n", i+1);
+						close(fd);
+						return t;
+					}
 					cle[i][l] = s - 48; 							/*!< Puisque la clé peut être sur 2 caracteres, on a un tableau à 2 dimensions cle [i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard */
 					//printf("Le caractere %c est dans le tableau cle a la case [%d][%d] \n", s, i, l);
 					l++;
 				}
 				if ((s != ';') && (compteur == 2)) 					/*!< Récupérer les modes de traitement pour chaque message si compteur vaut 2 (donc si on a vu deux ';' ) */
 				{
-					if (s == 'c') chiffrements[i] = 1; 
-					else chiffrements[i] = 0;
+					if (k>0)
+					{
+						printf("Erreur : Le mode de traitement du message %d contient trop de caractères \n", i+1);
+						close(fd);
+						return t;
+					}
+					if (s == 'c') 
+					{
+						chiffrements[i] = 1; 
+						++k;
+					}
+					else if (s=='d')
+					{
+						chiffrements[i] = 0;
+						++k;
+					}
+					else 
+					{
+						printf ("erreur le mode de traitement n est ni c ni d pour le message %d \n", i+1);
+						close(fd);
+						return t;
+						
+					}
 					//printf("Le caractere %d est dans le tableau chiffrements a la case [%d] \n",chiffrements[i]	,i);
 				}
+				if (compteur>2) 
+				{
+					printf("erreur du nombre d arguments dans le fichier principal \n");
+					close(fd);
+					return t;
+				} 
 			}
 			else
 			{
 			++i; 
-			compteur = j = l= 0;
+			compteur = j = l= k = 0;
 			}	
 		}
 	}
@@ -213,7 +257,13 @@ traitement extraire(char * nom_fichier)
 	
 	for (i = 0; i < nb_messages; i++) // UTILE ????????????????????????????????????????????????
 	{
-	//printf("chiffrements[%d] = %d \n cle_finale[%d] = %d \n chemins[%d] = %s \n", i ,chiffrements[i], i, cle_finale[i], i, chemins[i]);
+		fd=open(chemins[i], O_RDONLY);
+		if (fd==-1) 
+		{
+			printf("erreur ouverture fichier message %d \n",i+1);
+			close(fd);
+			return t;
+		}
 	}
 	t = init_traitement(chiffrements, cle_finale, nb_messages, chemins); 
 	return t;
@@ -623,11 +673,8 @@ void affiche_decryptage(const message m)
 			write(0, &c, 1);
 		}
 	}
-	if (c != '\n') 
-	{
-		s = '\n'; 
-		write (0, &s, 1);
-	}
+	s = '\n'; 
+	write (0, &s, 1);
 	close(fd);
 	close(fd2);
 }
