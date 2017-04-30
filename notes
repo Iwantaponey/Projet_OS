@@ -15,3 +15,20 @@ Rapport : 2/3 pages max
 Choix de conception / découpage du programme
 Qui a fait quoi
 Problèmes rencontrés
+
+
+
+
+
+Relecture :
+- Pourquoi mettre chiffrement et cle dans les structures mot, message, traitement par dans l'une seulement ?
+C'est redondant non ?
+-  Quand je créé un autre fichier message (msg4.txt) ça écrit le résultat sur le terminal, à régler.
+-  Besoin des constantes en #define ?
+-  Voir les lignes annotées par des points d'interrogation en particulier
+-  On se sert de la structure Buffer ou pas du coup ?
+-  Revoir les commentaires et en-têtes des fonctions
+- Ya un truc qui ne va pas avec de déchiffrage, il ne prend pas en compte  les espaces et retour à la ligne lors de la création du fichier decypher.
+D'ailleurs le fichier decypher n'est pas demandé, pourquoi le faire ?
+- Problème avec le dernier mot lors du déchiffrage !!!!!!!!!!! Voir msg4.txt
+

@@ -1,3 +1,13 @@
+/**
+ * \file fonction.h
+ * \brief Fichier header du fichier fonction.c
+ * 
+ * Fichier contenant les structures utilisées dans le programme
+ * et les prototypes des fonctions implémentée dans le fichier 
+ * fonction.c
+ * 
+ */
+ 
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -11,53 +21,96 @@
 #include <sys/times.h>
 #include <pthread.h>
 
-#define taille_max_chemin 1024
-#define taille_buffer 100	
+#define taille_max_chemin 1024 		/*!< On en a besoin de ces constantes ??????? */
+#define taille_buffer 100			/*!< ???????????????????????????????????????? */
 
+
+/// Définition des structures du programme
+
+
+/**
+ * \struct mot
+ * \brief Définition d'un mot
+ */
 typedef struct
 {
-    int num_mot; // le numéro du mot dans le message 
-    int nb_char; // taille du mot en caractères
-    int chiffrement;
-    int cle;
-    char * tab_char; // tableau de caractères ayant pour taille la taille du mot
+    int num_mot; 			/*!< Numéro du mot dans le message */
+    int nb_char; 			/*!< Taille du mot en caractères */
+    int chiffrement; 		/*!< Mode de chiffrement : cryptage ou décryptage 
+								(si chiffrement=0, alors on est en déchiffrement, 
+								sinon on est en chiffrement) */
+    int cle;				/*!< Pas du décalage dans l'alphabet */
+    char * tab_char; 		/*!< Tableau de caractères de taille la taille du mot */
 }mot;
 
+
+/**
+ * \struct message
+ * \brief Définition d'un message
+ */
 typedef struct 
 {
-	int num_mess; // Numéro du message dans le fichier principal donné en entrée
-    int nb_mots; // Nombre de mots dans le message
-    mot * tab_mots; // Tableau de structures mots
-    int chiffrement;// mode de traitement (si chiffrement=0, alors on est en déchiffrement, sinon on est en chiffrement)
-    int cle;// pas du chiffrement de César
-    char * chemin;
+	int num_mess; 			/*!< Numéro du message dans le fichier principal 
+								donné en entrée */
+    int nb_mots; 			/*!< Nombre de mots dans le message */
+    mot * tab_mots; 		/*!< Tableau de structures mots */
+    int chiffrement;		/*!< Mode de chiffrement : cryptage ou décryptage 
+								(si chiffrement=0, alors on est en déchiffrement, 
+								sinon on est en chiffrement) */
+    int cle;				/*!< Pas du décalage dans l'alphabet */
+    char * chemin;			/*!< Chemin du fichier dans l'arborescence des fichiers */
 }message;
 
-typedef struct // 
-{
-	int * chiffrements;
-	int * cles;
-    int nb_messages; // Pour créer le nombre de processus fils correspondant
-    char ** chemins; // Tableau de chaînes de caractères qui pour chaque message contient son chemin, seulement pour extraire le contenu du fichier principal
-    message * tab_mess; // Tableau de struct message au nombre de nb_messages
 
-}traitement;  
-
-typedef struct 
-{
-	char * tab_buff; // tableau de caractères qui contiendra l’intégralité du message
-    pthread_mutex_t * mutex; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
-    pthread_cond_t * cond; // variable mutex qui permettra d’assurer une section critique autour du buffer, assurer le postage du mot de chaque thread dans le bon ordre pour avoir un message ayant du sens ?
-}buffer;
-
+/**
+ * \struct traitement
+ * \brief Définition de traitement 
+ * 
+ * Champs nécessaires à la fabrication de la structure unique portant le reste des sous-structures
+ * 
+ */
 typedef struct
 {
-	mot w; // mot que le thread aura à traiter
-	buffer b; // buffer que les threads utiliseront pour rendre leur travail
-	int emplacement; // emplacement ou on commence à écrire dans le buffer 
-	int nb_mots;
-	int compteur;
+	int * chiffrements;		/*!< Tableau d'entiers contenant les modes d'action des 
+								threads pour chaque message */
+	int * cles;				/*!< Tableau d'entiers contenant les clés pour chaque message */
+    int nb_messages; 		/*!< Pour créer le nombre de processus fils correspondant */
+    char ** chemins; 		/*!< Tableau de chaînes de caractères qui, pour chaque 
+								fichier message, contient son chemin (seulement pour 
+								extraire le contenu du fichier principal) */
+    message * tab_mess; 	/*!< Tableau de struct message au nombre de nb_messages */
+}traitement;  
+
+
+/**
+ * \struct buffer
+ * \brief Définition du buffer
+ */
+typedef struct 
+{
+	char * tab_buff; 		/*!< tableau de caractères qui contiendra l’intégralité du message */
+}buffer;
+
+
+/**
+ * \struct arg
+ * \brief Définition de l'argument de thread
+ * 
+ * Structures servant à gérer l'écriture du mode dans le buffer après cryptage ou décryptage du mot
+ * 
+ */
+typedef struct
+{
+	mot w; 					/*!< Mot que le thread aura à traiter */
+	buffer b; 				/*!< Buffer que les threads utiliseront pour rendre leur travail */
+	int emplacement; 		/*!< Emplacement où on commence à écrire dans le buffer */
+	int nb_mots;			/*!< Nombre de mots ??????????????????????????????????? */
+	int compteur;			/*!< ????????????????????????????????????????? */
 }arg;
+
+
+/// Prototypes des fonctions
+
 
 mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char);
 message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
