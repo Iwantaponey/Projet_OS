@@ -107,7 +107,6 @@ typedef struct
 	buffer b; 				/*!< Buffer que les threads utiliseront pour rendre leur travail */
 	int emplacement; 		/*!< Emplacement où on commence à écrire dans le buffer */
 	int nb_mots;			/*!< Nombre de mots ??????????????????????????????????? */
-	int compteur;			/*!< ????????????????????????????????????????? */
 }arg;
 
 
@@ -128,8 +127,8 @@ void * thread_buffer(void * z);
 char * assigne_thread(traitement t, int num_mess);
 void retour_cryptage(char * buf, message m);
 void retour_decryptage(char * buf, message m);
-char * traitement_message (message m;);
-int traitement_entier (traitement t);
+void traitement_message (message m;);
+void traitement_entier (traitement t);
 void libere_mot(mot m);
 void libere_message(message m);
 void libere_traitement(traitement t);

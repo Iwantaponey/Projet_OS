@@ -78,7 +78,7 @@ traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char
 buffer init_buffer(int taille_buff)
 {
 	buffer b;
-	b.tab_buff = malloc(taille_buffer * sizeof(char));
+	b.tab_buff = malloc(taille_buffer * sizeof(char));				/*!< taille_buffer est une constante */
 	return b;
 }
 
@@ -282,7 +282,7 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 		fd = open(t.chemins[i], O_RDONLY);
 		for(j = 0; j < nb_mots[i]; ++j)
 		{
-			while(read(fd, &s, 1) && (s != ' ') && (s != '\n') && (s!='\t'))
+			while(read(fd, &s, 1) && (s != ' ') && (s != '\n') && (s!='\t'))   	/*!< Tant qu'on arrive à lire un caractère qui n'est ni un blanc, ni un retour à la ligne ni une tabulation alors on est en train de lire un caractère lettre et on augmente alors le nombre de caractères du mot */
 			nb_char[i][j] = nb_char[i][j] + 1;
 		}
 		close(fd);
@@ -358,7 +358,7 @@ traitement assigne_message(traitement t)
 		}
 	}
 	nb_char = compte_nb_char(nb_mots, nb_char, t);					/*!< Récupérer le nombre de caractères */
-	char *** tab_mess;
+	char *** tab_mess;												/*!< Tableau à trois dimensions, la première dimension contient le numéro du message, la deuxième dimension contient le numéro du mot et la troisième dimension contient le numéro du caractère */
 	tab_mess = malloc(t.nb_messages * sizeof(char**));
 	for (i = 0; i < t.nb_messages; ++i)
 	{
@@ -368,7 +368,6 @@ traitement assigne_message(traitement t)
 			tab_mess[i][j] = malloc(nb_char[i][j] * sizeof(char));
 		}
 	}
-	
 	for (i = 0; i < t.nb_messages; ++i)
 	{
 		fd = open(t.chemins[i], O_RDONLY);
@@ -377,26 +376,24 @@ traitement assigne_message(traitement t)
 			for (k = 0; k < nb_char[i][j]; ++k)
 				{
 					read(fd, &(tab_mess[i][j][k]), 1);
-					while ((tab_mess[i][j][k] == ' ') || (tab_mess[i][j][k] == '\n') || (tab_mess[i][j][k] == '\t'))
+					while ((tab_mess[i][j][k] == ' ') || (tab_mess[i][j][k] == '\n') || (tab_mess[i][j][k] == '\t')) 	/*!< On relit jusqu'à ce qu'on trouve un caractère autre que blanc, retour à la ligne et tabulation */
 						read(fd, &(tab_mess[i][j][k]), 1);
 				}
 		}
 		close(fd);
 	}
-	
 	message * mess = t.tab_mess;
 	for (i = 0; i < t.nb_messages; ++i)
 	{
-		mot * mots = malloc(nb_mots[i] * sizeof(mot));
-		
+		mot * mots = malloc(nb_mots[i] * sizeof(mot)); 				/*!< Pour chaque message on a un tableau de mots */
 		for (j = 0; j < nb_mots[i]; ++j)
 		{
-			mots[j] = init_mot(j, nb_char[i][j], t.chiffrements[i], t.cles[i], tab_mess[i][j]);
+			mots[j] = init_mot(j, nb_char[i][j], t.chiffrements[i], t.cles[i], tab_mess[i][j]);		/*!< Initialiser tous nos mots pour chaque message */
 		}
-		mess[i] = init_mess(i, nb_mots[i], mots, t.chiffrements[i], t.cles[i], t.chemins[i]);
+		mess[i] = init_mess(i, nb_mots[i], mots, t.chiffrements[i], t.cles[i], t.chemins[i]);		/*!< Mettre les tableau de mots qu'on vient juste d'allouer dans le tableau de de messages */
 	}
 	t.tab_mess = mess;
-	for (i = 0; i < t.nb_messages; ++i)
+	for (i = 0; i < t.nb_messages; ++i)								/*!< Libérer les tableaux d'entiers dont on a plus besoin car ils ont été recopié déjà */
 	{
 		free(nb_char[i]);
 	}
@@ -428,13 +425,13 @@ char cryptage_char(char c, int cle) 			/*!< Utilisation de la table ASCII */
 	if ((c > 90) && (c < 97)) return c; 		/*!< Si le caractère est après le début du codage des lettres majuscules et avant le codage des lettres minuscules */
 	if (c < 91) 								/*!< Si le caractère est une majuscule (codé entre 65 et 90) */
 	{
-		if (c + cle < 128)
+		if (c + cle < 128)						/*!< Si on obtient un caractère qui ne sort pas de la table ASCII on ne doit pas forcément faire le -26 */
 		{	
 			c = c + cle; 						/*!< Modification du caractère */
 			if (c > 90) c = c - 26;
 		}
-		else
-		{	
+		else		
+		{										/*!< Si on obtient un caractère qui sort de la table ASCII alors on fait forcément -26 */
 			c = c + cle - 26;
 		}
 	}
@@ -536,18 +533,18 @@ void retour_cryptage(char * buf, message m)
 	int i, fd, fd2;  
 	char c = 'a';
 	char * nom_fichier = m.chemin;
-	fd = open(nom_fichier, O_RDONLY);
+	fd = open(nom_fichier, O_RDONLY); 								/*!< On lit le fichier original le fichier original */
 	fd2 = open(strcat(nom_fichier, "_cypher"), O_CREAT | O_WRONLY, 0666);
 	i = 0;
 	while (read(fd, &c, 1))
 	{
-		if((c != ' ') && (c != '\t') && (c != '\n'))
+		if((c != ' ') && (c != '\t') && (c != '\n'))				/*!< Si on est en train de lire une lettre alors on écrit ce qu'il y a dans le buffer (le caractère crypté) */		
 		{	
 			write(fd2, buf + i, 1);
 			++i;
 		}
-		else
-		{
+		else		
+		{															/*!< Si on est en train de lire un caractère autre qu'une lettre ou un signe, on avance pas dans le buffer et on recopie ce qu'il y a dans le fichier original */
 			write(fd2, &c, 1);
 		}
 	}
@@ -568,7 +565,7 @@ void retour_cryptage(char * buf, message m)
 void retour_decryptage(char * buf, message m)
 {
 	int j = 0, fd;  
-	char * nom_fichier = strcat(m.chemin, "_decypher");
+	char * nom_fichier = strcat(m.chemin, "_decypher");				/*!< On créé le fichier decypher qui contient le contenu du buffer sans caractère blanc, retour à la ligne et tabulation afin que le processus directeur puisse lire dedans */
 	fd = open(nom_fichier, O_CREAT | O_WRONLY, 0666);
 	do{
 		write(fd, buf + j, 1);
@@ -595,8 +592,8 @@ void affiche_decryptage(const message m)
 	char * nom_fichier_d = strcat(m.chemin, "_decypher");
 	fd2 = open(nom_fichier_d, O_RDONLY);
 	while (read(fd, &c, 1))
-	{
-		if((c != ' ') && (c != '\t') && (c != '\n'))
+	{																/*!< Pour conserver les caractères blancs, retour à la ligne et tabulation on utilise la même méthode que dans retour_cryptage */
+		if((c != ' ') && (c != '\t') && (c != '\n'))				
 		{	
 			read(fd2, &s, 1);
 			write(0, &s, 1);
@@ -607,7 +604,7 @@ void affiche_decryptage(const message m)
 		}
 	}
 	s = '\n'; 
-	write (0, &s, 1);
+	write (0, &s, 1);												/*!< On sépare deux déchiffrements d'un retour à la ligne */
 	close(fd);
 	close(fd2);
 	unlink(nom_fichier_d);
@@ -624,30 +621,30 @@ void affiche_decryptage(const message m)
  */
 void * thread_buffer(void * z)
 {
-	arg * a = (arg *) z; 
+	arg * a = (arg *) z; 										/*!< Cast */
 	int i = a -> emplacement, j = 0; 
-	char * retour; 									/*!< retour va contenir le mot traité */
-	if (a -> w.chiffrement)							/*!< S'il faut décrypter */
+	char * retour; 												/*!< retour va contenir le mot traité */
+	if (a -> w.chiffrement)										/*!< S'il faut décrypter */
 	{
 		retour = cryptage_mot(a -> w);
 		while(i < (a -> emplacement) + (a -> w.nb_char)) 		/*!< Commencer au prochain caractère libre et écrire tout le mot traité dans le buffer, le mot traité ayant la même taille que le mot non traité */
 		{
-			a -> b.tab_buff[i] = retour[j]; 		/*!< Ecrire le mot traité caractère par caractère dans le buffer */
+			a -> b.tab_buff[i] = retour[j]; 					/*!< Ecrire le mot traité caractère par caractère dans le buffer */
 			++j; 	
 			++i;				
 		}
-		free(retour); 								/*!< Libérer le mot traité car il est mis dans le buffer */
+		free(retour); 											/*!< Libérer le mot traité car il est mis dans le buffer */
 	}
 	else
 	{
 		retour = decryptage_mot(a -> w);
 		while(i < (a -> emplacement) + (a -> w.nb_char)) 		/*!< Commencer au prochain caractère libre et écrire tout le mot traité dans le buffer, le mot traité ayant la même taille que le mot non traité */
 		{		
-			a -> b.tab_buff[i] = retour[j]; 		/*!< Ecrit le mot traité caractère par caractère dans le buffer */
+			a -> b.tab_buff[i] = retour[j]; 					/*!< Ecrit le mot traité caractère par caractère dans le buffer */
 			++j; 	
 			++i;				
 		}
-		free(retour); 								/*!< Libérer le mot traité car il est mis dans le buffer */
+		free(retour); 											/*!< Libérer le mot traité car il est mis dans le buffer */
 	}
 	return NULL; 
 }
@@ -659,17 +656,17 @@ void * thread_buffer(void * z)
  * 
  * \param m Message à traiter par les threads
  * 
- * \return Un tableau de caractères contenant les buffers ??????????????????????????????????
+ * \return Aucun
  */
-char * traitement_message(message m)
+void traitement_message(message m)
 {
-	buffer b = init_buffer(taille_buffer); 				/*!< Buffer qui sera utilisé par les threads pour écrire le message après traitement */
-	arg * tab_arg = malloc(m.nb_mots * sizeof(arg)); 
-	int emplace[m.nb_mots];
+	buffer b = init_buffer(taille_buffer); 							/*!< Buffer qui sera utilisé par les threads pour écrire le message après traitement */
+	arg * tab_arg = malloc(m.nb_mots * sizeof(arg)); 				/*!< Un arg est l'argument passé au thread */
+	int emplace[m.nb_mots];											/*!< Contient l'emplacement à partir duquel le thread va commencer à écrire dans le buffer */
 	pthread_t * tab_thread = malloc(m.nb_mots * sizeof(pthread_t)); 		/*!< On aura autant de threads que de mots à traiter */
-	int i=0; 
+	int i = 0; 
 	emplace[0] = 0;
-	while(i < m.nb_mots - 1)
+	while(i < m.nb_mots - 1)										/*!< Déterminer où le thread doit écrire en fonction de là où le thread traitant le mot précédent s'arrête d'écrire */
 	{
 		emplace[i + 1] = emplace[i] + (m.tab_mots[i].nb_char);
 		++i;
@@ -680,7 +677,6 @@ char * traitement_message(message m)
 		tab_arg[i].b = b;
 		tab_arg[i].nb_mots = m.nb_mots;
 		tab_arg[i].emplacement = emplace[i];
-		tab_arg[i].compteur = 0;
 	}
 	for (i = 0; i < m.nb_mots; ++i)
 	{
@@ -692,7 +688,6 @@ char * traitement_message(message m)
 	free(b.tab_buff);
 	free(tab_arg);
 	free(tab_thread);
-	return b.tab_buff;
 }
 
 
@@ -724,19 +719,19 @@ int dechiffrement_demande(traitement t)
  * 
  * \return 
  */
-int traitement_entier(traitement t)
+void traitement_entier(traitement t)
 {
 	int i; 
 	pid_t a;
-	for (i = 0; i < t.nb_messages; ++i)
+	for (i = 0; i < t.nb_messages; ++i)								/*!< Pour chaque message on fait un fork */
 	{
-		if (!(a = fork()))
+		if (!(a = fork()))											/*!< Si on est le fils */
 		{
 			traitement_message(t.tab_mess[i]);
 			exit(0);
 		}
 		else
-		{
+		{															/*!< Si on est le père */
 			wait(NULL);
 			if (t.tab_mess[i].chiffrement == 0)
 			{	
@@ -744,7 +739,6 @@ int traitement_entier(traitement t)
 			}
 		}	
 	}	
-	return 0;
 }
 
 
@@ -787,8 +781,6 @@ void libere_message(message m)
  * \brief Fonction qui libère la mémoire allouée à la structure traitement
  * 
  * \param t Structure traitement dont on veut libérer la mémoire
- * 
- * \return 
  */
 void libere_traitement(traitement t)
 {
