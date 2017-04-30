@@ -118,7 +118,6 @@ mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char
 message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins);
 traitement extraire (char * nom_fichier);
-void affiche_traitement(traitement t);
 traitement assigne_message (traitement t);
 void * thread_buffer(void * z);
 char cryptage_char(char c, int cle);

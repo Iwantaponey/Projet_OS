@@ -25,7 +25,6 @@ int main (int argc, char ** argv)
 	if (t.initialise)
 	{	
 		t=assigne_message(t);
-		affiche_traitement(t);
 		traitement_entier(t);
 		libere_traitement(t);
 	}
