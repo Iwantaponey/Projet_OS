@@ -62,7 +62,7 @@ message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, in
  */
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins)
 {
-	traitement t = {1, chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };
+	traitement t = { 1, chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };	/*!< On valide l'initialisation et on alloue le tableau de message puisqu'on a récupérer le nombre de messages à traiter */
 	return t;
 }
 
@@ -94,9 +94,9 @@ buffer init_buffer(int taille_buff)
 int compte_nb_messages(char * nom_fichier)
 {
 	int	fd = open(nom_fichier, O_RDONLY), nb_messages = 0; char s = 'a';
-	if (fd < 1) 
+	if (fd == -1)						/*!< Vérification qu'open n'a pas renvoyé un code d'erreur et donc qu'il a bien pu ouvrir le fichier principal */ 
 	{
-		return -1;
+		return -1;						/*!< Si on a un problème d'ouverture du fichier principal */
 	}
 	while(read(fd, &s, 1)) 				/*!< Premier scan du fichier principal pour déterminer le nombre de messages à traiter */
 	{
@@ -118,20 +118,20 @@ int compte_nb_messages(char * nom_fichier)
  * \param nb_messages Nombre de message pour lesquels on récupère la clé
  * \param cle[nb_messages][2] ????????????????????????????????????????????????????????
  * 
- * \return Un tableau de clés
+ * \return Un tableau d'entier des clés
  */
 int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
 {
 	int i;
 	for (i = 0; i < nb_messages; ++i)
 	{
-		if (cle[i][1] != -1)
+		if (cle[i][1] != -1)										/*!< Si on a quelquechose dans la dizaine de la clé */
 		{
-			cle_finale[i] = ((10 * cle[i][0]) + cle[i][1])%26;
+			cle_finale[i] = ((10 * cle[i][0]) + cle[i][1])%26;		/*!< On multiple la dizaine par 10, on ajoute l'unité puis on fait modulo 26 du tout */
 		}
 		else
 		{	
-			cle_finale[i] = (cle[i][0]);
+			cle_finale[i] = (cle[i][0]);							/*!< Si on a pas de dizaine on met juste l'unité dans le tableau cle_finale */ 
 		}
 	}
 	return cle_finale;
@@ -157,30 +157,30 @@ traitement extraire(char * nom_fichier)
 		printf ("Structure traitement non remplie, problème d'ouverture du fichier principal \n");
 		return t;
 	}	
-	
 	int cle[nb_messages][2];  
 	int * chiffrements = malloc(nb_messages * sizeof(int));
 	char ** chemins = malloc(nb_messages * sizeof(char*));
 	for (i = 0; i < nb_messages; i++)
 	{
 		chemins[i] = malloc(taille_max_chemin * sizeof(char));
-		cle[i][1] = -1;
+		cle[i][1] = -1;												/*!< On considère que la clé est comprise entre 1 et 9, si elle est supérieure à 9 alors le deuxième caractère est mis dans [i][1] et n'est plus à -1. Attention l'unité de la clé est dans [i][0] seulement s'il n'y a pas de dizaine, autrement elle est dans la case [i][1], et la dizaine est toujours dans [i][0] */
 	}
-	i = j = l = k = 0;
+	i = j = l = k = 0;												/*!< Initialisation de tous les itérateurs de boucle */
 	fd = open(nom_fichier, O_RDONLY);
-	while(e && (i < nb_messages) && (j < taille_max_chemin)) 		/*!< Lecture du fichier principal */
+	while(e && (i < nb_messages) && (j < taille_max_chemin)) 		/*!< Lecture du fichier principal, la boucle s'arrête juste avant la fin du fichier et ne conduit pas à une erreur de lecture si toutes les lectures précédentes se sont bien déroulées */
 	{	
-		e = read(fd, &s, 1); 										/*!< Lecture des caractères l'un après l'autre */
-		if (!e) 
+		e = read(fd, &s, 1); 										/*!< Lecture des caractères l'un après l'autre, e permet de savoir si on a réussi à lire ou pas */
+		if (!e) 													/*!< Vérification que le fichier principal n'est pas vide et qu'on peut lire dedans */
 		{													
 			printf("Erreur de lecture du fichier principal \n");
+			close(fd);
 			return t;
 		}
 		else
 		{
 			if (s != '\n') 											/*!< Traiter les messages les uns après les autres */
 			{
-				if (s != ';' && compteur == 0) 						/*!< Récupérer les chemins de chaque message si compteur vaut 0 (donc si on n'a pas encore vu de ';' ) */
+				if ((s != ';') && (compteur == 0)) 					/*!< Récupérer les chemins de chaque message si compteur vaut 0 (donc si on n'a pas encore vu de ';' ) */
 				{	
 					chemins[i][j] = s;
 					j++;
@@ -188,26 +188,27 @@ traitement extraire(char * nom_fichier)
 				if (s == ';') ++compteur; 							/*!< Quand on rencontre un ';' on augmente le compteur */
 				if ((s != ';') && (compteur == 1)) 					/*!< Récupérer la clé de chaque message si compteur vaut 1 (donc si on a vu un seul ';' ) */
 				{
-					if ((s<48) || (s>57))
+					if ((s < 48) || (s > 57))
 					{
-						printf("erreur : la cle n est pas correcte pour le message %d \n", i+1);
+						printf("Erreur : la clé n'est pas correcte pour le message %d \n", i+1);
 						close(fd);
 						return t;
 					}
-					if (l>1)
-					{
-						printf("erreur : la cle est supérieure à 99 pour le message %d \n", i+1);
+					if (l > 1)										/*!< l est le compteur de nombre de caractère de la clé */
+					{												/*!< Si l est supérieur à 1 alors on a déjà lu deux caractères de clé mais si on ne lit toujours pas de ';' alors le fichier principal est faux donc on n'exécute rien */
+						printf("Erreur : la clé est supérieure à 99 pour le message %d \n", i+1);
 						close(fd);
 						return t;
 					}
-					cle[i][l] = s - 48; 							/*!< Puisque la clé peut être sur 2 caracteres, on a un tableau à 2 dimensions cle [i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard */
+					cle[i][l] = s - 48; 							/*!< Puisque la clé peut être sur 2 caractères, on a un tableau à 2 dimensions cle[i][l] qui nous permet pour chaque message de stocker les deux chiffres composant la clé qu'on reconstituera plus tard */
+																	/*!< Dans la table ASCII le 0 est codé par 48 donc pour récupérer la valeur entière du caractère s, on fait s - 48 */
 					l++;
 				}
 				if ((s != ';') && (compteur == 2)) 					/*!< Récupérer les modes de traitement pour chaque message si compteur vaut 2 (donc si on a vu deux ';' ) */
 				{
-					if (k>0)
+					if (k > 0)										/*!< k est le compteur de nombre de caractère du mode de chiffrement */
 					{
-						printf("Erreur : Le mode de traitement du message %d contient trop de caractères \n", i+1);
+						printf("Erreur : le mode de traitement du message %d contient trop de caractères \n", i+1);
 						close(fd);
 						return t;
 					}
@@ -216,43 +217,41 @@ traitement extraire(char * nom_fichier)
 						chiffrements[i] = 1; 
 						++k;
 					}
-					else if (s=='d')
+					else if (s == 'd')
 					{
 						chiffrements[i] = 0;
 						++k;
 					}
 					else 
 					{
-						printf ("erreur le mode de traitement n est ni c ni d pour le message %d \n", i+1);
+						printf ("Erreur : le mode de traitement n'est ni c ni d pour le message %d \n", i+1);
 						close(fd);
 						return t;
-						
 					}
 				}
-				if (compteur>2) 
+				if (compteur > 2) 									/*!< Si jamais on a trop d'arguments dans la ligne, le fichier principal est faux donc on ne traite rien */
 				{
-					printf("erreur du nombre d arguments dans le fichier principal \n");
+					printf("Erreur du nombre d'arguments dans le fichier principal \n");
 					close(fd);
 					return t;
 				} 
 			}
 			else
 			{
-			++i; 
-			compteur = j = l= k = 0;
+			++i; 													/*!< On passe au message suivant */
+			compteur = j = l = k = 0;								/*!< On remet tous les compteurs à 0 pour passer au message suivant */
 			}	
 		}
 	}
 	close(fd);
 	int * cle_finale = malloc(nb_messages * sizeof(int));
 	cle_finale = recupere_cle(cle_finale, nb_messages, cle);
-	
-	for (i = 0; i < nb_messages; i++) // UTILE ????????????????????????????????????????????????
+	for (i = 0; i < nb_messages; i++)								/*!< Dernier niveau de contrôle : on vérifie la validité du chemin */
 	{
-		fd=open(chemins[i], O_RDONLY);
-		if (fd==-1) 
+		fd = open(chemins[i], O_RDONLY);
+		if (fd == -1) 
 		{
-			printf("erreur ouverture fichier message %d \n",i+1);
+			printf("Erreur lors de l'ouverture fichier message %d \n",i+1);
 			close(fd);
 			return t;
 		}
@@ -304,7 +303,7 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 int * compte_nb_mots(int * nb_mots, traitement t)
 {	
 	int i, fd = -1, compteur = 0;
-	char s = 'a';
+	char s = 'a'; 											/*!< Initialisation d'un char pour être sûr de la valeur qui est contenue dedans */
 	for (i = 0; i < t.nb_messages; ++i)
 	{	
 		fd = open(t.chemins[i], O_RDONLY);
@@ -316,8 +315,7 @@ int * compte_nb_mots(int * nb_mots, traitement t)
 				{
 					nb_mots[i] = nb_mots[i] + 1; 
 				}
-				else
-					compteur++;
+				else compteur++;							/*!< Si on a plusieurs caractère blancs à la suite, on ne doit pour autant pas augmenter le nombre de mots */
 			}
 			else compteur = 0;
 		}
@@ -329,7 +327,7 @@ int * compte_nb_mots(int * nb_mots, traitement t)
 
 /**
  * \fn traitement assigne_message(traitement t)
- * \brief
+ * \brief Remplir les structures message et mot avec tous les champs nécessaires
  * 
  * \param t Structure unique contenant tous les mots, modes, clés et messages 
  * 		  des fichiers messages et du fichier principal
@@ -339,16 +337,14 @@ int * compte_nb_mots(int * nb_mots, traitement t)
  */
 traitement assigne_message(traitement t)
 {
-	int fd = -1, i = 0, j = 0, k = 0;
+	int fd = -1, i = 0, j = 0, k = 0;								/*!< fd est à -1 pour s'assurer que fd change */
 	int * nb_mots = malloc(t.nb_messages * sizeof(int));
 	for (i = 0; i < t.nb_messages; ++i)
 	{
-		nb_mots[i] = 0;
+		nb_mots[i] = 0;												/*!< Initialisation du nombre de mot à 0 pour chaque message */
 	}
-	
-	nb_mots = compte_nb_mots(nb_mots, t);
-	
-	int ** nb_char = malloc(t.nb_messages * sizeof(int*));
+	nb_mots = compte_nb_mots(nb_mots, t);							/*!< Récupérer le nombre de mots */
+	int ** nb_char = malloc(t.nb_messages * sizeof(int*));			/*!< Tableau à deux dimensions : la première dimension est le numéro du message et la deuxième dimension est le numéro du mot dont on compte le nombre de caractères */
 	
 	for (i = 0; i < t.nb_messages; ++i)
 	{	
@@ -358,12 +354,10 @@ traitement assigne_message(traitement t)
 	{
 		for (j = 0; j < nb_mots[i]; ++j)
 		{
-			nb_char[i][j] = 0;
+			nb_char[i][j] = 0;										/*!< Initialisation du nombre de caractères à 0 */
 		}
 	}
-	
-	nb_char = compte_nb_char(nb_mots, nb_char, t);
-	
+	nb_char = compte_nb_char(nb_mots, nb_char, t);					/*!< Récupérer le nombre de caractères */
 	char *** tab_mess;
 	tab_mess = malloc(t.nb_messages * sizeof(char**));
 	for (i = 0; i < t.nb_messages; ++i)

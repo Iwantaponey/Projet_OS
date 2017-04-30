@@ -21,10 +21,10 @@
 int main (int argc, char ** argv)
 {
 	traitement t;
-	t=extraire(argv[1]);
-	if (t.initialise)
+	t = extraire(argv[1]);
+	if (t.initialise)					/*!< Si tout s'est bien passé alors le champs d'initialisation de traitement est valide donc aucune erreur n'a été détectée et on peut faire la suite du programme */
 	{	
-		t=assigne_message(t);
+		t = assigne_message(t);
 		traitement_entier(t);
 		libere_traitement(t);
 	}
