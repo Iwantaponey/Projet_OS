@@ -696,7 +696,6 @@ void traitement_message(message m)
 	{
 		tab_arg[i].w = m.tab_mots[i];
 		tab_arg[i].b = b;
-		tab_arg[i].nb_mots = m.nb_mots;
 		tab_arg[i].emplacement = emplace[i];
 	}
 	for (i = 0; i < m.nb_mots; ++i)
