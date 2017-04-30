@@ -3,7 +3,7 @@
  * \brief Fichier header du fichier fonction.c
  * 
  * Fichier contenant les structures utilisées dans le programme
- * et les prototypes des fonctions implémentée dans le fichier 
+ * et les prototypes des fonctions implémentées dans le fichier 
  * fonction.c
  * 
  */
@@ -22,8 +22,8 @@
 #include <pthread.h>
 #include <limits.h>
 
-#define taille_max_chemin 1000000 		/*!< On en a besoin de ces constantes ??????? */
-#define taille_buffer INT_MAX			/*!< ???????????????????????????????????????? */
+#define taille_max_chemin 1000000 		/*!< Taille max que peut faire le chemin d'un fichier */
+#define taille_buffer INT_MAX			/*!< Taille max que peut faire le buffer */
 
 
 /// Définition des structures du programme
@@ -51,8 +51,7 @@ typedef struct
  */
 typedef struct 
 {
-	int num_mess; 			/*!< Numéro du message dans le fichier principal 
-								donné en entrée */
+	int num_mess; 			/*!< Numéro du message dans le fichier principal  */
     int nb_mots; 			/*!< Nombre de mots dans le message */
     mot * tab_mots; 		/*!< Tableau de structures mots */
     int chiffrement;		/*!< Mode de chiffrement : cryptage ou décryptage 
@@ -72,15 +71,13 @@ typedef struct
  */
 typedef struct
 {
-	int initialise;
-	int * chiffrements;		/*!< Tableau d'entiers contenant les modes d'action des 
-								threads pour chaque message */
+	int initialise;			/*!< Entier qui permet de savoir si l'initialisation a eu lieu correctement ou non */
+	int * chiffrements;		/*!< Tableau d'entiers contenant les modes de traitement pour chaque message */
 	int * cles;				/*!< Tableau d'entiers contenant les clés pour chaque message */
-    int nb_messages; 		/*!< Pour créer le nombre de processus fils correspondant */
+    int nb_messages; 		/*!< Entier qui contient le nombre de messages à traiter */
     char ** chemins; 		/*!< Tableau de chaînes de caractères qui, pour chaque 
-								fichier message, contient son chemin (seulement pour 
-								extraire le contenu du fichier principal) */
-    message * tab_mess; 	/*!< Tableau de struct message au nombre de nb_messages */
+								fichier message, contient son chemin  */
+    message * tab_mess; 	/*!< Tableau de struct message de taille nb_messages */
 }traitement;  
 
 
@@ -98,15 +95,13 @@ typedef struct
  * \struct arg
  * \brief Définition de l'argument de thread
  * 
- * Structures servant à gérer l'écriture du mode dans le buffer après cryptage ou décryptage du mot
- * 
+ * Structures servant à donner aux threads tout ce qui est nécessaire pour leur traitement
  */
 typedef struct
 {
 	mot w; 					/*!< Mot que le thread aura à traiter */
-	buffer b; 				/*!< Buffer que les threads utiliseront pour rendre leur travail */
-	int emplacement; 		/*!< Emplacement où on commence à écrire dans le buffer */
-	int nb_mots;			/*!< Nombre de mots ??????????????????????????????????? */
+	buffer b; 				/*!< Buffer unique par message que les threads utiliseront pour rendre leur travail */
+	int emplacement; 		/*!< Emplacement où le thread commence à écrire dans le buffer */
 }arg;
 
 
@@ -116,20 +111,23 @@ typedef struct
 mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char);
 message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins);
-traitement extraire (char * nom_fichier);
-traitement assigne_message (traitement t);
-void * thread_buffer(void * z);
+buffer init_buffer(int taille_buff);
+int compte_nb_messages(char * nom_fichier);
+int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2]);
+traitement extraire(char * nom_fichier);
+int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t);
+int * compte_nb_mots(int * nb_mots, traitement t);
+traitement assigne_message(traitement t);
 char cryptage_char(char c, int cle);
-char * cryptage_mot (const mot m);
+char * cryptage_mot(const mot m);
 char decryptage_char(char c, int cle);
-char * decryptage_mot (const mot m);
-void * thread_buffer(void * z);
-char * assigne_thread(traitement t, int num_mess);
+char * decryptage_mot(const mot m);
 void retour_cryptage(char * buf, message m);
 void retour_decryptage(char * buf, message m);
-void traitement_message (message m;);
-void traitement_entier (traitement t);
+void affiche_decryptage(const message m);
+void * thread_buffer(void * z);
+void traitement_message(message m);
+void traitement_entier(traitement t);
 void libere_mot(mot m);
 void libere_message(message m);
 void libere_traitement(traitement t);
-void barrier(arg * a);
