@@ -172,6 +172,12 @@ traitement extraire(char * nom_fichier)
 		if (!e) 													/*!< Vérification que le fichier principal n'est pas vide et qu'on peut lire dedans */
 		{													
 			printf("Erreur de lecture du fichier principal \n");
+			for (i=0; i<nb_messages; ++i)
+			{
+				free(chemins[i]);
+			}
+			free(chemins);
+			free(chiffrements);
 			close(fd);
 			return t;
 		}
@@ -190,12 +196,24 @@ traitement extraire(char * nom_fichier)
 					if ((s < 48) || (s > 57))
 					{
 						printf("Erreur : la clé n'est pas correcte pour le message %d \n", i+1);
+						for (i=0; i<nb_messages; ++i)
+						{
+							free(chemins[i]);
+						}
+						free(chemins);
+						free(chiffrements);
 						close(fd);
 						return t;
 					}
 					if (l > 1)										/*!< l est le compteur de nombre de caractère de la clé */
 					{												/*!< Si l est supérieur à 1 alors on a déjà lu deux caractères de clé mais si on ne lit toujours pas de ';' alors le fichier principal est faux donc on n'exécute rien */
 						printf("Erreur : la clé est supérieure à 99 pour le message %d \n", i+1);
+						for (i=0; i<nb_messages; ++i)
+						{
+							free(chemins[i]);
+						}
+						free(chemins);
+						free(chiffrements);
 						close(fd);
 						return t;
 					}
@@ -208,6 +226,12 @@ traitement extraire(char * nom_fichier)
 					if (k > 0)										/*!< k est le compteur de nombre de caractère du mode de chiffrement */
 					{
 						printf("Erreur : le mode de traitement du message %d contient trop de caractères \n", i+1);
+						for (i=0; i<nb_messages; ++i)
+						{
+							free(chemins[i]);
+						}
+						free(chemins);
+						free(chiffrements);
 						close(fd);
 						return t;
 					}
@@ -224,6 +248,12 @@ traitement extraire(char * nom_fichier)
 					else 
 					{
 						printf ("Erreur : le mode de traitement n'est ni c ni d pour le message %d \n", i+1);
+						for (i=0; i<nb_messages; ++i)
+						{
+							free(chemins[i]);
+						}
+						free(chemins);
+						free(chiffrements);
 						close(fd);
 						return t;
 					}
@@ -231,6 +261,12 @@ traitement extraire(char * nom_fichier)
 				if (compteur > 2) 									/*!< Si jamais on a trop d'arguments dans la ligne, le fichier principal est faux donc on ne traite rien */
 				{
 					printf("Erreur du nombre d'arguments dans le fichier principal \n");
+					for (i=0; i<nb_messages; ++i)
+					{
+						free(chemins[i]);
+					}
+					free(chemins);
+					free(chiffrements);
 					close(fd);
 					return t;
 				} 
@@ -251,6 +287,13 @@ traitement extraire(char * nom_fichier)
 		if (fd == -1) 
 		{
 			printf("Erreur lors de l'ouverture fichier message %d \n",i+1);
+			for (i=0; i<nb_messages; ++i)
+			{
+				free(chemins[i]);
+			}
+			free(chemins);
+			free(chiffrements);
+			free(cle_finale);
 			close(fd);
 			return t;
 		}
