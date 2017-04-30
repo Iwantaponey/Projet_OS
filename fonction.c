@@ -462,16 +462,9 @@ char cryptage_char(char c, int cle) 			/*!< Utilisation de la table ASCII */
 	if (c > 122) return c; 						/*!< Si le caractère est après la fin du codage des lettres (après z) */
 	if ((c > 90) && (c < 97)) return c; 		/*!< Si le caractère est après le début du codage des lettres majuscules et avant le codage des lettres minuscules */
 	if (c < 91) 								/*!< Si le caractère est une majuscule (codé entre 65 et 90) */
-	{
-		if (c + cle < 128)						/*!< Si on obtient un caractère qui ne sort pas de la table ASCII on ne doit pas forcément faire le -26 */
-		{	
-			c = c + cle; 						/*!< Modification du caractère */
-			if (c > 90) c = c - 26;
-		}
-		else		
-		{										/*!< Si on obtient un caractère qui sort de la table ASCII alors on fait forcément -26 */
-			c = c + cle - 26;
-		}
+	{	
+		c = c + cle; 						/*!< Modification du caractère */
+		if (c > 90) c = c - 26;
 	}
 	else if (c > 96) 							/*!< Si le caractère est une majuscule (codé entre 97 et 122) */
 	{
