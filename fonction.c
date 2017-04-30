@@ -1,5 +1,5 @@
 /**
- * \file fichier.c
+ * \file fonction.c
  * \brief Fichier contenant toutes les fonctions utilisées dans le
  *  	  programme de cryptage et de décryptage par le chiffrement de Cesar.
  */
@@ -14,10 +14,10 @@
  * \fn mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char);
  * \brief Fonction d'initialisation d'un mot
  * 
- * \param num_mot Numéro du mot dans le fichier entré lors de l'exécution (entier)
- * \param nb_char Nombre de caractères du mot (entier)
- * \param chiffrement Mode d'action du thread : cryptage (1) ou de décryptage (0)
- * \param cle Pas du décalage dans l'alphabet (entier)
+ * \param num_mot Numéro du mot dans le fichier message
+ * \param nb_char Nombre de caractères dans le mot
+ * \param chiffrement Mode de traitement pour le mot : cryptage (1) ou décryptage (0)
+ * \param cle Pas du décalage dans l'alphabet
  * \param tab_char Tableau de caractères contenant les caractères du mot
  * 
  * \return Un mot initialisé avec les paramètres d'appel de la fonction
@@ -33,11 +33,11 @@ mot init_mot(int num_mot, int nb_char, int chiffrement, int cle, char * tab_char
  * \fn message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, int cle, char * chemin);
  * \brief Fonction d'initialisation d'un message
  * 
- * \param num_mess Numéro du message dans le fichier entré lors de l'exécution (entier strictement positif)
- * \param nb_mots Nombre de mots dans le fichier message (entier supérieur ou égal à 0)
+ * \param num_mess Numéro du message dans le fichier principal
+ * \param nb_mots Nombre de mots dans le fichier message
  * \param tab_mots Tableau de structures mots contenant chaque mot du message
- * \param chiffrement Mode d'action du thread : cryptage (1) ou de décryptage (0)
- * \param cle Pas du décalage dans l'alphabet (entier strictement positif)
+ * \param chiffrement Mode de traitement du mot : cryptage (1) ou décryptage (0)
+ * \param cle Pas du décalage dans l'alphabet
  * \param chemin Tableau de caractères contenant le path du fichier message
  * 
  * \return Un message initialisé avec les paramètres d'appel de la fonction
@@ -53,16 +53,16 @@ message init_mess(int num_mess, int nb_mots, mot * tab_mots, int chiffrement, in
  * \fn traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins)
  * \brief Fonction d'initialisation d'un traitement
  * 
- * \param chiffrement Tableau des modes d'action du thread : cryptage (1) ou de décryptage (0)
- * \param cles Tableau des clés de cryptage ou décryptage
- * \param nb_messages Nombre de messages dans le fichier d'entrée (entier)
- * \param chemins Tableau de tableau de caractères contenant le path de chaque fichier message
+ * \param chiffrement Tableau des modes de traitement de taille nb_messages : cryptage (1) ou décryptage (0)
+ * \param cles Tableau des clés de cryptage ou de décryptage
+ * \param nb_messages Nombre de messages dans le fichier principal
+ * \param chemins Tableau de tableaux de caractères contenant le path de chaque fichier message
  * 
  * \return Un traitement initialisé avec les paramètres d'appel de la fonction
  */
 traitement init_traitement(int * chiffrements, int * cles, int nb_messages, char ** chemins)
 {
-	traitement t = { 1, chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };	/*!< On valide l'initialisation et on alloue le tableau de message puisqu'on a récupérer le nombre de messages à traiter */
+	traitement t = { 1, chiffrements, cles, nb_messages, chemins, malloc(nb_messages * sizeof(message)) };	/*!< On valide l'initialisation et on alloue le tableau de message puisqu'on a récupéré le nombre de messages à traiter */
 	return t;
 }
 
@@ -85,11 +85,11 @@ buffer init_buffer(int taille_buff)
 
 /**
  * \fn int compte_nb_messages(char * nom_fichier)
- * \brief Fonction comptant le nombre de message contenus dans le fichier d'entrée
+ * \brief Fonction comptant le nombre de message contenus dans le fichier principal
  * 
- * \param nom_fichier Nom du fichier contenant les paths de chaque fichier message
+ * \param nom_fichier Nom du fichier principal
  * 
- * \return Le nombre de messages dans le fichier d'entrée
+ * \return Le nombre de messages dans le fichier principal
  */
 int compte_nb_messages(char * nom_fichier)
 {
@@ -114,11 +114,11 @@ int compte_nb_messages(char * nom_fichier)
  * \fn int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
  * \brief Fonction de récupération des clés à utiliser pour chaque message
  * 
- * \param cle_finale Tableau d'entier contenant les clés 
- * \param nb_messages Nombre de message pour lesquels on récupère la clé
- * \param cle[nb_messages][2] ????????????????????????????????????????????????????????
+ * \param cle_finale Tableau d'entier déjà alloué qui contiendra les clés 
+ * \param nb_messages Nombre de message à traiter
+ * \param cle[nb_messages][2] Tableau d'entiers à deux dimensions contenant les chiffres de la clé lus dans le fichier principal
  * 
- * \return Un tableau d'entier des clés
+ * \return Le tableau d'entiers contenant les clés correctes
  */
 int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
 {
@@ -140,12 +140,11 @@ int * recupere_cle(int * cle_finale, int nb_messages, int cle[nb_messages][2])
 
 /**
  * \fn traitement extraire(char * nom_fichier)
- * \brief Fonction principale d'extraction des données du fichier d'entrée
+ * \brief Fonction d'extraction des données pour remplir la structure traitement
  * 
- * \param nom_fichier Nom du fichier contenu dans un tableau de caractère
+ * \param nom_fichier Nom du fichier principal
  * 
- * \return Une structure traitement remplie par les messages et les mots 
- * ????????????????????????????????????????????????????????????????????????????????????
+ * \return Une structure traitement remplie pour les chiffrements, les clés, le nombre de messages et les chemins des messages 
  */
 traitement extraire(char * nom_fichier)
 {	
@@ -263,15 +262,13 @@ traitement extraire(char * nom_fichier)
 
 /**
  * \fn int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
- * \brief Fonction de comptage des caractères de chaque mot d'un message
+ * \brief Fonction de comptage des caractères de chaque mot de chaque message
  * 
- * \param nb_mot Nombre de mots dans le message
- * \param nb_char Nombre de caractères dans le message
- * \param t Structure unique qui contient les messages et mots
+ * \param nb_mot Tableau d'entiers qui contient pour chaque message son nombre de mots
+ * \param nb_char Tableau de tableaux d'entiers déjà alloué qui contiendra pour chaque mot de chaque message le nombre de caractères du mot
+ * \param t Structure traitement qui contient le nombre de messages et le chemin pour chaque message
  * 
- * \return Un tableau d'entier contenant le nombre de caractères de chaque mot 
- * 		   pour chacun des messages
- * ????????????????????????????????????????????????????????????????????????????????????
+ * \return Un tableau de tableaux d'entier contenant le nombre de caractères de chaque mot pour chaque message
  */
 int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
 {
@@ -295,10 +292,10 @@ int ** compte_nb_char(int * nb_mots, int ** nb_char, traitement t)
  * \fn int * compte_nb_mots(int * nb_mots, traitement t)
  * \brief Fonction qui compte le nombre de mot pour chaque message
  * 
- * \param nb_mots Tableau d'entiers contenant le nombre de mot pour chaque message
- * \param t Structure unique qui contient la totalité des messages et mots
+ * \param nb_mots Tableau d'entiers déjà alloué qui contiendra le nombre de mot pour chaque message
+ * \param t Structure traitement qui contient le nombre de messages et le chemin pour chaque message
  * 
- * \return Un tableau d'entiers contenant le nombre de mot de chaque message
+ * \return Un tableau d'entiers contenant le nombre de mot pour chaque message
  */
 int * compte_nb_mots(int * nb_mots, traitement t)
 {	
@@ -329,11 +326,9 @@ int * compte_nb_mots(int * nb_mots, traitement t)
  * \fn traitement assigne_message(traitement t)
  * \brief Remplir les structures message et mot avec tous les champs nécessaires
  * 
- * \param t Structure unique contenant tous les mots, modes, clés et messages 
- * 		  des fichiers messages et du fichier principal
+ * \param t Structure traitement contenant le nombre de messages et le chemin pour chaque message
  * 
- * \return Une structure traitement unique pour chaque exécution du programme
- * 		   contenant tous les messages et mots à traiter
+ * \return Structure traitement qui contient tous les messages et tous les mots avec tous les champs nécessaires
  */
 traitement assigne_message(traitement t)
 {
@@ -521,12 +516,10 @@ char * decryptage_mot(const mot m)
 
 /**
  * \fn void retour_cryptage(char * buf, message m)
- * \brief Fonction qui fait le retour du message après son cryptage
+ * \brief Fonction qui crée le fichier crypté
  * 
- * \param buf Buffer dans lequel on stocke les caractères cryptés ou décryptés ????????????
- * \param m Message traité
- * 
- * \return Aucun
+ * \param buf Buffer dans lequel est stocké le message crypté sans caractère blanc, retour à la ligne et tabulation
+ * \param m Message d'origine
  */
 void retour_cryptage(char * buf, message m)
 {
@@ -555,12 +548,10 @@ void retour_cryptage(char * buf, message m)
 
 /**
  * \fn void retour_decryptage(char * buf, message m)
- * \brief Fonction qui fait le retour du message après son décryptage
+ * \brief Fonction qui crée le fichier decypher à partir du buffer
  * 
- * \param buf Tableau de caractères qui sert à stocker le message après son traitement
- * \param m Message traité
- * 
- * \return Aucun
+ * \param buf Tableau de caractères dans lequel est stocké le message déchiffré sans espace, retour à la ligne et tabulation
+ * \param m Message d'origine
  */
 void retour_decryptage(char * buf, message m)
 {
@@ -576,12 +567,10 @@ void retour_decryptage(char * buf, message m)
 
 
 /**
- * \fn void affiche_decryptage(const message m) ???????????????????????????????????????????
- * \brief Fonction qui affiche le message décrypté
+ * \fn void affiche_decryptage(const message m)
+ * \brief Fonction qui affiche le message décrypté. Exécutée par le processus directeur
  * 
- * \param m Message décrypté
- * 
- * \return Aucun
+ * \param m Message d'origine
  */
 void affiche_decryptage(const message m)
 {	
@@ -607,17 +596,15 @@ void affiche_decryptage(const message m)
 	write (0, &s, 1);												/*!< On sépare deux déchiffrements d'un retour à la ligne */
 	close(fd);
 	close(fd2);
-	unlink(nom_fichier_d);
+	unlink(nom_fichier_d);											/*!< On supprime le fichier decypher car il n'y a qu'un seul lien dessus et qu'on supprime ce lien */
 }
 
 
 /**
  * \fn void * thread_buffer(void * z)
- * \brief Fonction qui appelle le traitement du message et le stocke dans un buffer
+ * \brief Fonction exécutée par les threads qui appelle le cryptage ou le decryptage du message et le stocke dans un buffer
  * 
- * \param z ????????????????????????????????????????????????????????????????????????????
- *
- * \return Aucun
+ * \param z Pointeur sur une structure arg qui contient tous les arguments nécessaire à l'exécution de la fonction par les threads
  */
 void * thread_buffer(void * z)
 {
@@ -651,12 +638,10 @@ void * thread_buffer(void * z)
 
 
 /**
- * \fn char * traitement_message(message m)
- * \brief Fonction qui va créer les threads pour un message
+ * \fn void traitement_message(message m)
+ * \brief Fonction exécutée par les processus fils qui va superviser le traitement d'un message par les threads
  * 
  * \param m Message à traiter par les threads
- * 
- * \return Aucun
  */
 void traitement_message(message m)
 {
@@ -691,33 +676,12 @@ void traitement_message(message m)
 }
 
 
-/** A QUOI ELLE SERT ???????????????????????????????????????????????????????????????????
- * \fn int dechiffrement_demande(traitement t)
- * \brief Fonction qui regarde quels sont les messages à déchiffrer
- * 
- * \param t Structure unique contenant tous les messages et leurs données de traitement
- *
- * \return 
- */
-int dechiffrement_demande(traitement t)
-{
-	int i;
-	for (i = 0; i < t.nb_messages; ++i)
-	{
-		if (t.chiffrements[i] == 0)
-		return i;
-	}
-	return -1;
-}
-
-
 /**
- * \fn int traitement_entier(traitement t)
- * \brief Fonction qui appelle les sous-fonctions traitement pour tous les messages
+ * \fn void traitement_entier(traitement t)
+ * \brief Fonction exécutée par le processus directeur qui va créer les processus fils et initier le traitement de chaque message
+ * 		Elle appelle la fonction affiche_decryptage pour que le processus directeur affiche le déchiffrement de chaque message
  * 
- * \param t Structure unique contenant tous les messages et leurs données de traitement
- * 
- * \return 
+ * \param t Structure traitement contenant tous les messages et leurs données de traitement
  */
 void traitement_entier(traitement t)
 {
@@ -744,11 +708,9 @@ void traitement_entier(traitement t)
 
 /**
  * \fn void libere_mot(mot m)
- * \brief Fonction qui libère la mémoire allouée à un mot
+ * \brief Fonction qui libère la mémoire allouée pour un mot
  * 
  * \param m Le mot dont on veut libérer la mémoire
- *
- * \return Aucun
  */
 void libere_mot(mot m)
 {
@@ -758,11 +720,9 @@ void libere_mot(mot m)
 
 /**
  * \fn void libere_message(message m)
- * \brief Fonction qui libère la mémoire allouée à un message
+ * \brief Fonction qui libère la mémoire allouée pour un message
  * 
  * \param m Le message dont on veut libérer la mémoire
- *
- * \return Aucun
  */
 void libere_message(message m)
 {
@@ -778,7 +738,7 @@ void libere_message(message m)
 
 /**
  * \fn void libere_traitement(traitement t)
- * \brief Fonction qui libère la mémoire allouée à la structure traitement
+ * \brief Fonction qui libère la mémoire allouée pour la structure traitement
  * 
  * \param t Structure traitement dont on veut libérer la mémoire
  */
